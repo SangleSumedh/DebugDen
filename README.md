@@ -46,7 +46,6 @@ A few reasons:
 - It’s **free** right now (be honest, so is your budget).
 - Needs only a **Google Cloud account** + billing setup (they won’t charge unless you go wild).
 - Perfect for **students, hobbyists**, and rebels.
-- We like OpenAI too, but can’t pay in exposure.
 
 ---
 

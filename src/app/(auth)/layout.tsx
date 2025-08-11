@@ -1,5 +1,7 @@
-import { useAuthStore } from "@/store/Auth";
-import { useRouter } from "next/router";
+"use client";
+
+import { useAuthStore } from "../../store/Auth";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -13,7 +15,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [session, router]);
 
   if (session) {
-    return null;
+    return null; 
   }
 
   return (
