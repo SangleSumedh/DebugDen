@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300" role="img" aria-labelledby="titleDesc">
+  <title id="titleDesc">DebugDen logo — Terminal bug icon</title>
+  <desc>Logo: rounded terminal badge with bug and code chevrons.</desc>
+
+  <!-- Background / badge -->
+  <g id="badge" transform="translate(40,80)">
+    <rect x="0" y="0" width="220" height="160" rx="28" ry="28" fill="#0f1724" stroke="#111827" stroke-width="4"/>
+    <rect x="12" y="18" width="196" height="124" rx="16" ry="16" fill="#06070a"/>
+    <circle cx="28" cy="28" r="6" fill="#ff6b6b"/>
+    <circle cx="46" cy="28" r="6" fill="#fbbf24"/>
+    <circle cx="64" cy="28" r="6" fill="#34d399"/>
+  </g>
+
+  <!-- bug + chevrons emblem -->
+  <g id="emblem" transform="translate(150,120)">
+    <g transform="translate(-12,6)" fill="#7dd3fc">
+      <path d="M-46 10 L-66 -10 L-62 -14 L-40 8 L-62 30 L-66 26 Z" transform="scale(1.1)"/>
+      <path d="M46 10 L66 -10 L62 -14 L40 8 L62 30 L66 26 Z" transform="scale(1.1)"/>
+    </g>
+    <g>
+      <ellipse cx="0" cy="18" rx="28" ry="34" fill="#8b5cf6"/>
+      <ellipse cx="-2" cy="-10" rx="12" ry="12" fill="#7c3aed"/>
+      <path d="M-10 -16 C-16 -30, -36 -38, -44 -30" stroke="#7c3aed" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M10 -16 C16 -30, 36 -38, 44 -30" stroke="#7c3aed" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M-22 16 L-44 22" stroke="#6d28d9" stroke-width="3" stroke-linecap="round"/>
+      <path d="M-22 26 L-46 36" stroke="#6d28d9" stroke-width="3" stroke-linecap="round"/>
+      <path d="M22 16 L44 22" stroke="#6d28d9" stroke-width="3" stroke-linecap="round"/>
+      <path d="M22 26 L46 36" stroke="#6d28d9" stroke-width="3" stroke-linecap="round"/>
+      <rect x="-6" y="12" width="4" height="4" fill="#e6e6e6" rx="1"/>
+      <rect x="2" y="12" width="4" height="4" fill="#e6e6e6" rx="1"/>
+      <ellipse cx="-6" cy="8" rx="6" ry="3" fill="#a78bfa" opacity="0.22"/>
+    </g>
+  </g>
+</svg>
