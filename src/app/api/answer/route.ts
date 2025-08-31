@@ -27,14 +27,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response, {
       status: 201,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; code?: number };
     return NextResponse.json(
-      {
-        error: error?.message || "Error creating answer",
-      },
-      {
-        status: error?.status || error?.code || 500,
-      }
+      { error: err.message ?? "Error creating answer" },
+      { status: err.code ?? 500 }
     );
   }
 }
@@ -65,14 +62,11 @@ export async function DELETE(request: NextRequest) {
         status: 200,
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; code?: number };
     return NextResponse.json(
-      {
-        error: error?.message || "Error deleting answer",
-      },
-      {
-        status: error?.status || error?.code || 500,
-      }
+      { error: err.message ?? "Error creating answer" },
+      { status: err.code ?? 500 }
     );
   }
 }

@@ -110,20 +110,17 @@ export async function POST(request: NextRequest) {
       {
         data: {
           document: null,
-          voteResult: (upvotes.total - downvotes.total),
+          voteResult: upvotes.total - downvotes.total,
           message: "vote handled",
         },
       },
       { status: 200 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string; code?: number };
     return NextResponse.json(
-      {
-        error: error?.message || "Error in voting",
-      },
-      {
-        status: error?.status || error?.code || 500,
-      }
+      { error: err.message ?? "Error creating answer" },
+      { status: err.code ?? 500 }
     );
   }
 }

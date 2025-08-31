@@ -3,6 +3,7 @@ import { databases } from "@/models/client/config";
 import { db, answerCollection } from "@/models/name";
 import { ID, Query } from "appwrite";
 import { useAuthStore } from "./Auth";
+import { Models } from "appwrite";
 
 interface Answer {
   $id: string;
@@ -20,6 +21,12 @@ interface AnswerStore {
   addAnswer: (questionId: string, content: string) => Promise<void>;
 }
 
+interface AnswerDocument extends Models.Document {
+  content: string;
+  authorId: string;
+  questionId: string;
+}
+
 export const useAnswerStore = create<AnswerStore>((set, get) => ({
   answers: [],
   loading: false,
@@ -33,17 +40,26 @@ export const useAnswerStore = create<AnswerStore>((set, get) => ({
         // optionally: Query.orderDesc("$createdAt")
       ]);
 
-      const mapped = res.documents.map((doc: any) => ({
-        $id: doc.$id,
-        content: doc.content,
-        authorId: doc.authorId,
-        questionId: doc.questionId,
-        $createdAt: doc.$createdAt,
-      })) as Answer[];
+      const mapped: Answer[] = res.documents.map((doc) => {
+        const answerDoc = doc as unknown as AnswerDocument;
+        return {
+          $id: answerDoc.$id,
+          content: answerDoc.content,
+          authorId: answerDoc.authorId,
+          questionId: answerDoc.questionId,
+          $createdAt: answerDoc.$createdAt,
+        };
+      });
 
       set({ answers: mapped, loading: false });
-    } catch (err: any) {
-      set({ error: err?.message ?? "Failed to fetch answers", loading: false });
+    } catch (err: unknown) {
+      let message = "Failed to fetch answers";
+
+      if (err instanceof Error) {
+        message = err.message;
+      }
+
+      set({ error: message, loading: false });
     }
   },
 
@@ -73,8 +89,14 @@ export const useAnswerStore = create<AnswerStore>((set, get) => ({
       };
 
       set({ answers: [...get().answers, newAnswer], loading: false });
-    } catch (err: any) {
-      set({ error: err?.message ?? "Failed to add answer", loading: false });
+    } catch (err: unknown) {
+      let message = "Failed to fetch answers";
+
+      if (err instanceof Error) {
+        message = err.message;
+      }
+
+      set({ error: message, loading: false });
     }
   },
 }));
