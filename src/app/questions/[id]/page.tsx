@@ -99,6 +99,7 @@ export default function QuestionDetail() {
               className="bg-slate-700/40 p-4 rounded-xl border border-slate-600"
             >
               <p>{ans.content}</p>
+              <span className="text-gray-300 text-sm">Answered by {ans.authorId}</span>
             </div>
           ))
         ) : (
