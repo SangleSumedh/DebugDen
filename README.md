@@ -1,11 +1,19 @@
 # 🐞 DebugDen — A Safe Haven for Stuck Devs and Code Sleuths
 
 Welcome to **DebugDen**: Not your grandma’s Stack Overflow.  
-It’s for devs, by devs, with an AI sidekick who works for snacks (and sometimes gives questionable advice).
+ It’s for devs, by devs, with an AI sidekick who works for snacks (and sometimes gives questionable advice).
 
-- **Stuck?** Drop your bug — someone (or AI) might just save your day.  
-- **Just watching?** Lurk all you want.  
+- **Stuck?** Drop your bug — someone (or AI) might just save your day.
+- **Just watching?** Lurk all you want.
 - **In the mood to flex?** Write answers, climb the karma ladder 🪜.
+
+---
+
+## 🌎 Live Site
+
+You can explore the live, deployed version of DebugDen here:
+
+[**🔗 Visit DebugDen**](https://debug-den.vercel.app)
 
 ---
 
@@ -30,12 +38,12 @@ It’s for devs, by devs, with an AI sidekick who works for snacks (and sometime
 
 ## 🧠 The Tech Under the Hood
 
-| Layer     | Tech                            |
-|-----------|---------------------------------|
-| Frontend  | React, Tailwind, React Router   |
-| Backend   | Appwrite (swap in your own, YOLO) |
-| AI        | Google Gemini API *(Free for now)* |
-| Hosting   | Vercel / Netlify / Local        |
+| Layer    | Tech                               |
+| -------- | ---------------------------------- |
+| Frontend | React, Tailwind, React Router      |
+| Backend  | Appwrite (swap in your own, YOLO)  |
+| AI       | Google Gemini API _(Free for now)_ |
+| Hosting  | Vercel / Netlify / Local           |
 
 ---
 
@@ -62,3 +70,4 @@ npm install
 # Env time: Add your Gemini API key
 touch .env
 # and plug that key in
+```
