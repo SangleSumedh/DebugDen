@@ -55,7 +55,7 @@ export default function Home() {
                   <h2 className="text-xl font-semibold">{q.title}</h2>
                   <p className="text-gray-400 mt-1">{q.content}</p>
                   <div className="flex justify-between items-center mt-3 text-sm text-gray-500">
-                    <span>Asked by {q.authorId ?? "Anonymous"}</span>
+                    <span>Asked by {q.authorName ?? "Anonymous"}</span>
                   </div>
                 </div>
               </Link>

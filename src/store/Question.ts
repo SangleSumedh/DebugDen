@@ -10,6 +10,7 @@ interface Question {
   title: string;
   content: string;
   authorId: string;
+  authorName: string;
   tags: string[];
   attachmentId?: string;
   $createdAt: string; 
@@ -36,6 +37,7 @@ interface QuestionDocument {
   title: string;
   content: string;
   authorId: string;
+  authorName: string;
   tags?: string[];
   attachmentId?: string;
   $createdAt: string;
@@ -59,6 +61,7 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
             title: d.title ?? "",
             content: d.content ?? "",
             authorId: d.authorId ?? "",
+            authorName: d.authorName ?? "",
             tags: d.tags ?? [],
             attachmentId: d.attachmentId,
             $createdAt: d.$createdAt ?? new Date().toISOString(),
@@ -70,6 +73,7 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
           title: "",
           content: "",
           authorId: "",
+          authorName: "",
           tags: [],
           attachmentId: undefined,
           $createdAt: new Date().toISOString(),
@@ -96,9 +100,10 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         title: doc.title,
         content: doc.content,
         authorId: doc.authorId,
+        authorName: doc.authorName,
         tags: doc.tags ?? [],
         attachmentId: doc.attachmentId,
-        $createdAt: doc.$createdAt, // ✅
+        $createdAt: doc.$createdAt, 
       };
 
       return question;
@@ -122,6 +127,7 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
           tags,
           attachmentId,
           authorId: user.$id,
+          authorName: user.name,
         }
       );
 
@@ -130,6 +136,7 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         title: newDoc.title,
         content: newDoc.content,
         authorId: newDoc.authorId,
+        authorName: newDoc.authorName,
         tags: newDoc.tags ?? [],
         attachmentId: newDoc.attachmentId,
         $createdAt: newDoc.$createdAt, 

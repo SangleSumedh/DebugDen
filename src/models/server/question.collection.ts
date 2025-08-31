@@ -36,6 +36,13 @@ export default async function createQuestionCollection() {
     databases.createStringAttribute(
       db,
       questionCollection,
+      "authorName",
+      50,
+      false
+    ),
+    databases.createStringAttribute(
+      db,
+      questionCollection,
       "tags",
       50,
       true,
@@ -51,8 +58,7 @@ export default async function createQuestionCollection() {
     ),
   ]);
 
-  console.log("Question Attributes created")
-
+  console.log("Question Attributes created");
 
   //create Indexes
 

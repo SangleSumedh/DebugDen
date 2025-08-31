@@ -9,6 +9,7 @@ interface Answer {
   $id: string;
   content: string;
   authorId: string;
+  authorName: string;
   questionId: string;
   $createdAt: string;
 }
@@ -24,6 +25,7 @@ interface AnswerStore {
 interface AnswerDocument extends Models.Document {
   content: string;
   authorId: string;
+  authorName: string;
   questionId: string;
 }
 
@@ -37,7 +39,7 @@ export const useAnswerStore = create<AnswerStore>((set, get) => ({
     try {
       const res = await databases.listDocuments(db, answerCollection, [
         Query.equal("questionId", questionId),
-        // optionally: Query.orderDesc("$createdAt")
+        Query.orderDesc("$createdAt")
       ]);
 
       const mapped: Answer[] = res.documents.map((doc) => {
@@ -46,6 +48,7 @@ export const useAnswerStore = create<AnswerStore>((set, get) => ({
           $id: answerDoc.$id,
           content: answerDoc.content,
           authorId: answerDoc.authorId,
+          authorName: answerDoc.authorName,
           questionId: answerDoc.questionId,
           $createdAt: answerDoc.$createdAt,
         };
@@ -77,6 +80,7 @@ export const useAnswerStore = create<AnswerStore>((set, get) => ({
           content,
           questionId,
           authorId: user.$id,
+          authorName: user.name ,
         }
       );
 
@@ -84,6 +88,7 @@ export const useAnswerStore = create<AnswerStore>((set, get) => ({
         $id: newDoc.$id,
         content: newDoc.content,
         authorId: newDoc.authorId,
+        authorName: newDoc.authorName,
         questionId: newDoc.questionId,
         $createdAt: newDoc.$createdAt,
       };

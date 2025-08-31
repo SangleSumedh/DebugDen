@@ -13,7 +13,7 @@ Welcome to **DebugDen**: Not your grandma’s Stack Overflow.
 
 You can explore the live, deployed version of DebugDen here:
 
-[**🔗 Visit DebugDen**](https://debug-den.vercel.app)
+[🔗 **Visit DebugDen**](https://debug-den.vercel.app)
 
 ---
 
@@ -53,7 +53,7 @@ A few reasons:
 
 - It’s **free** right now (be honest, so is your budget).
 - Needs only a **Google Cloud account** + billing setup (they won’t charge unless you go wild).
-- Perfect for **students, hobbyists**, and rebels.
+- Perfect for **students, hobbyists**, and **rebels**.
 
 ---
 
@@ -67,7 +67,10 @@ cd debugden
 # Grab the goods
 npm install
 
-# Env time: Add your Gemini API key
+# Env time: 
+# Add your Gemini API key
+# Add Appwrite projectId, host uri, and appwrite api key
+
 touch .env
 # and plug that key in
 ```

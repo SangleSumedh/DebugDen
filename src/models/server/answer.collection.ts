@@ -31,9 +31,17 @@ export default async function createAnswerCollection() {
       true
     ),
     databases.createStringAttribute(db, answerCollection, "authorId", 50, true),
+    databases.createStringAttribute(
+      db,
+      answerCollection,
+      "authorName",
+      50,
+      false
+    ),
   ]);
 
   console.log("Answer Attributes created");
 
+  console.log("come here")
   //create Indexes
 }
