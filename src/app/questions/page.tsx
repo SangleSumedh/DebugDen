@@ -7,12 +7,10 @@ import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/Auth";
 
-
 export default function Home() {
   const router = useRouter();
   const { questions, fetchQuestions, loading } = useQuestionStore();
   const user = useAuthStore();
-  
 
   useEffect(() => {
     fetchQuestions();

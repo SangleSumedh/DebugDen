@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
         await users.updatePrefs<UserPrefs>(QuestionOrAnswer.authorId, {
           reputation:
             voteStatus === "upvoted"
-              ? Number(authorPrefs.reputation) - 1
-              : Number(authorPrefs.reputation) + 1,
+              ? Number(authorPrefs.reputation) + 1
+              : Number(authorPrefs.reputation) - 1,
         });
       }
     }
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
       {
         data: {
           document: null,
-          voteResult: (upvotes.total = downvotes.total),
+          voteResult: (upvotes.total - downvotes.total),
           message: "vote handled",
         },
       },
