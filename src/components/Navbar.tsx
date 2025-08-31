@@ -23,7 +23,7 @@ export default function Navbar() {
   return (
     <nav
       className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-gradient-to-br from-slate-900 via-gray-900 to-indigo-950 border border-indigo-500/40 
-                      rounded-2xl"
+                      rounded-2xl z-50"
     >
       <div className="px-5 py-3 flex items-center justify-between">
         {/* Brand */}

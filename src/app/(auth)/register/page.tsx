@@ -43,7 +43,7 @@ function RegisterPage() {
       if (loginResponse.error) {
         setError(loginResponse.error.message);
       } else {
-        router.push("/dashboard"); // Redirect after successful registration
+        router.push("/"); // Redirect after successful registration
       }
     }
 

@@ -12,7 +12,7 @@ interface Question {
   authorId: string;
   tags: string[];
   attachmentId?: string;
-  $createdAt: string; // ✅ use Appwrite system field
+  $createdAt: string; 
 }
 
 interface QuestionState {
