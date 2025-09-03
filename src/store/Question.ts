@@ -4,6 +4,7 @@ import { databases } from "@/models/client/config";
 import { db, questionCollection } from "@/models/name";
 import { useAuthStore } from "./Auth";
 import { Models } from "appwrite";
+import { json } from "stream/consumers";
 
 interface Question {
   $id: string;
@@ -13,7 +14,7 @@ interface Question {
   authorName: string;
   tags: string[];
   attachmentId?: string;
-  $createdAt: string; 
+  $createdAt: string;
 }
 
 interface QuestionState {
@@ -82,13 +83,13 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
 
       set({ questions, loading: false });
     } catch (err: unknown) {
-      let message = "An unknown error occurred while creating question document";
+      let message =
+        "An unknown error occurred while creating question document";
       if (err instanceof Error) {
         message = err.message;
       }
       set({ error: message, loading: false });
     }
-
   },
 
   getQuestionById: async (id) => {
@@ -103,7 +104,7 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         authorName: doc.authorName,
         tags: doc.tags ?? [],
         attachmentId: doc.attachmentId,
-        $createdAt: doc.$createdAt, 
+        $createdAt: doc.$createdAt,
       };
 
       return question;
@@ -139,10 +140,28 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         authorName: newDoc.authorName,
         tags: newDoc.tags ?? [],
         attachmentId: newDoc.attachmentId,
-        $createdAt: newDoc.$createdAt, 
+        $createdAt: newDoc.$createdAt,
       };
 
       set({ questions: [...get().questions, newQuestion] });
+
+      // try {
+      //   await fetch("/api/ai-generated", {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({
+      //       questionId: newDoc.$id,
+      //       questionContent: newDoc.content,
+      //     }),
+      //   });
+      // } catch (err: unknown) {
+      //   const message =
+      //     err instanceof Error
+      //       ? err.message
+      //       : "unknown error occured while requesting ai response";
+      // }
     } catch (err: unknown) {
       let message = "An unknown error occurred while creating question";
       if (err instanceof Error) {
@@ -150,7 +169,6 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
       }
       set({ error: message, loading: false });
     }
-
   },
 
   deleteQuestion: async (id) => {
@@ -164,6 +182,5 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
       }
       set({ error: message, loading: false });
     }
-
   },
 }));

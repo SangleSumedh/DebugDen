@@ -28,6 +28,7 @@ export default function QuestionDetail() {
   const [newAnswer, setNewAnswer] = useState("");
   const [newComment, setNewComment] = useState("");
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [aiLoading, setAILoading] = useState(false);
 
   const { user } = useAuthStore();
   const {
@@ -59,13 +60,10 @@ export default function QuestionDetail() {
       fetchQuestion();
       fetchAnswers(id as string);
       fetchComments(CommentParentType.Question, id as string);
-
-      // fetch votes for question
       fetchVotes("question", id as string);
     }
   }, [id, fetchAnswers, fetchComments, fetchVotes]);
 
-  // also fetch votes for answers when they load
   useEffect(() => {
     answers.forEach((ans) => {
       fetchVotes("answer", ans.$id);
@@ -79,6 +77,37 @@ export default function QuestionDetail() {
       setNewAnswer("");
     } catch (err) {
       console.error("Failed to add answer:", err);
+    }
+  };
+
+  const handleGenerateAIAnswer = async () => {
+    if (!question) return;
+
+    setAILoading(true);
+    try {
+      const res = await fetch("/api/ai-generated", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          questionId: question.$id,
+          questionContent: question.content,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert("AI answer created successfully!");
+        fetchAnswers(question.$id);
+      } else {
+        console.error(data.error);
+        alert("Failed to generate AI answer: " + data.error);
+      }
+    } catch (err) {
+      console.error("Error calling AI API:", err);
+      alert("Something went wrong while generating AI answer.");
+    } finally {
+      setAILoading(false);
     }
   };
 
@@ -104,7 +133,6 @@ export default function QuestionDetail() {
   if (!question)
     return <div className="p-6 text-red-500">Question not found</div>;
 
-  // calculate vote stats for question
   const qUpvotes = Object.values(votes).filter(
     (v) =>
       v.type === "question" &&
@@ -218,7 +246,6 @@ export default function QuestionDetail() {
               (c) => c.type === CommentParentType.Answer && c.typeId === ans.$id
             );
 
-            // vote stats for answer
             const aUpvotes = Object.values(votes).filter(
               (v) =>
                 v.type === "answer" &&
@@ -334,7 +361,16 @@ export default function QuestionDetail() {
             onChange={(e) => setNewAnswer(e.target.value)}
             className="mb-3 bg-slate-900 border-slate-700 text-white"
           />
-          <Button onClick={handleAddAnswer}>Submit Answer</Button>
+          <div className="flex gap-3">
+            <Button onClick={handleAddAnswer}>Submit Answer</Button>
+            <Button
+              onClick={handleGenerateAIAnswer}
+              className="bg-purple-600 hover:bg-purple-700"
+              disabled={aiLoading}
+            >
+              {aiLoading ? "Generating..." : "Answer by AI"}
+            </Button>
+          </div>
         </div>
       ) : (
         <p className="mt-6 text-gray-400">Login to submit an answer.</p>
