@@ -1,76 +1,86 @@
 # 🐞 DebugDen — A Safe Haven for Stuck Devs and Code Sleuths
 
 Welcome to **DebugDen**: Not your grandma’s Stack Overflow.  
- It’s for devs, by devs, with an AI sidekick who works for snacks (and sometimes gives questionable advice).
+It’s for devs, by devs, with an AI sidekick who works for snacks (and sometimes gives questionable advice).
 
-- **Stuck?** Drop your bug — someone (or AI) might just save your day.
-- **Just watching?** Lurk all you want.
-- **In the mood to flex?** Write answers, climb the karma ladder 🪜.
+- **Stuck?** Drop your bug — someone (or AI) might just save your day.  
+- **Just watching?** Lurk all you want.  
+- **In the mood to flex?** Write answers, climb the karma ladder 🪜.  
 
 ---
 
 ## 🌎 Live Site
 
-You can explore the live, deployed version of DebugDen here:
-
-[🔗 **Visit DebugDen**](https://debug-den.vercel.app)
+👉 [**Visit DebugDen**](https://debug-den.vercel.app)
 
 ---
 
 ## 🚀 What Makes DebugDen Different?
 
 - **Ask & Answer Freely**  
-  Stack Overflow vibes without the “please read the docs first” police.
+  Stack Overflow vibes without the “please read the docs first” police.  
 
 - **Supercharged Search**  
-  Find threads, solutions, or just weird code tangents in seconds.
+  Find threads, solutions, or just weird code tangents in seconds.  
 
 - **Dev-First UI**  
-  Built with React, Tailwind, and dark mode for sensitive eyes.
+  Built with React, Tailwind, and dark mode for sensitive eyes.  
 
-- **Gemini AI in Your Corner (Coming Soon...)**  
-  Sometimes smart, sometimes wild-card, always fast.
+- **⚡ AI Sidekick (Now Live!)**  
+  Stuck at 3AM? Tap the *AI Answer* button and let our bot give you a “Created by AI” response.  
+  (Sometimes gold, sometimes chaos, always honest.)  
 
 - **Live Feedback (Coming Soon...)**  
-  For those who like their karma instant.
+  Karma now, validation later.  
 
 ---
 
 ## 🧠 The Tech Under the Hood
 
-| Layer    | Tech                               |
-| -------- | ---------------------------------- |
-| Frontend | React, Tailwind, React Router      |
-| Backend  | Appwrite (swap in your own, YOLO)  |
-| AI       | Google Gemini API _(Free for now)_ |
-| Hosting  | Vercel / Netlify / Local           |
+| Layer    | Tech                                      |
+| -------- | ----------------------------------------- |
+| Frontend | React, Tailwind, React Router             |
+| Backend  | Appwrite (swap in your own, YOLO)         |
+| AI       | OpenRouter (GPT / Gemini) ⚡ (AI Answers!) |
+| Hosting  | Vercel                                    |
 
 ---
 
-## 🤔 Why Gemini and Not OpenAI or any other AI?
+## 🤔 Why OpenRouter Instead of Just Gemini?
 
-A few reasons:
-
-- It’s **free** right now (be honest, so is your budget).
-- Needs only a **Google Cloud account** + billing setup (they won’t charge unless you go wild).
-- Perfect for **students, hobbyists**, and **rebels**.
+- **Flexibility** → Route requests to GPT-3.5, GPT-4, or Gemini with one API.  
+- **Budget-friendly** → Works with your student-level budget.  
+- **No more lock-in** → If Gemini is down, GPT steps in.  
 
 ---
 
 ## 📦 Quickstart
 
 ```bash
-# Clone this thing
-git clone https://github.com/yourusername/debugden.git
+# Clone this beast
+git clone https://github.com/sanglesumedh/debugden.git
 cd debugden
 
 # Grab the goods
 npm install
 
-# Env time:
-# Add your Gemini API key
-# Add Appwrite projectId, host uri, and appwrite api key
-
+# Env setup
 touch .env
-# and plug that key in
-```
+# Add your Appwrite creds (endpoint, projectId, apiKey)
+# Add your OpenRouter API key (for AI answers)
+
+
+## 🗺️ Roadmap
+
+DebugDen is just getting started. Here’s what’s cooking:
+
+- [x] **Core Q&A System** — Ask, answer, and vote like a boss.  
+- [x] **AI Sidekick (MVP)** — Auto-generate answers when humans are too slow.  
+- [ ] **UI Overhaul** — Sleek, responsive, and dev-first design (coming soon 🔥).   
+- [ ] **Instant Feedback** — Karma and notifications in real-time.  
+- [ ] **Tag System & Search Upgrade** — Smarter categorization and discovery.  
+- [ ] **Community Features** — Profiles, badges, and leaderboards.  
+- [ ] **Mobile-First Experience** — Smooth debugging even on the toilet.  
+- [ ] **Open Source Contributions** — Issues, PRs, and chaos welcome.
+
+---
