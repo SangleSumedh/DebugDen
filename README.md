@@ -22,14 +22,14 @@ You can explore the live, deployed version of DebugDen here:
 - **Ask & Answer Freely**  
   Stack Overflow vibes without the “please read the docs first” police.
 
-- **Gemini AI in Your Corner**  
-  Sometimes smart, sometimes wild-card, always fast.
-
 - **Supercharged Search**  
   Find threads, solutions, or just weird code tangents in seconds.
 
 - **Dev-First UI**  
   Built with React, Tailwind, and dark mode for sensitive eyes.
+
+- **Gemini AI in Your Corner (Coming Soon...)**  
+  Sometimes smart, sometimes wild-card, always fast.
 
 - **Live Feedback (Coming Soon...)**  
   For those who like their karma instant.
@@ -67,7 +67,7 @@ cd debugden
 # Grab the goods
 npm install
 
-# Env time: 
+# Env time:
 # Add your Gemini API key
 # Add Appwrite projectId, host uri, and appwrite api key
 

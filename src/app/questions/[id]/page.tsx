@@ -6,7 +6,8 @@ import { databases } from "@/models/client/config";
 import { db, questionCollection } from "@/models/name";
 import { useAuthStore } from "@/store/Auth";
 import { useAnswerStore } from "@/store/Answer";
-import { useCommentStore, CommentParentType } from "@/store/Comment"; // Import the comment store
+import { useCommentStore, CommentParentType } from "@/store/Comment";
+import { useVoteStore } from "@/store/Vote";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
@@ -16,7 +17,7 @@ interface Question {
   title: string;
   content: string;
   authorId: string;
-  authorName: string; // Add authorName to question interface
+  authorName: string;
   $createdAt: string;
 }
 
@@ -25,7 +26,7 @@ export default function QuestionDetail() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [loading, setLoading] = useState(true);
   const [newAnswer, setNewAnswer] = useState("");
-  const [newComment, setNewComment] = useState(""); // State for a new comment
+  const [newComment, setNewComment] = useState("");
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
 
   const { user } = useAuthStore();
@@ -35,13 +36,8 @@ export default function QuestionDetail() {
     addAnswer,
     loading: answersLoading,
   } = useAnswerStore();
-
-  const {
-    comments,
-    fetchComments,
-    addComment,
-    loading: commentsLoading,
-  } = useCommentStore(); // Use the comment store
+  const { comments, fetchComments, addComment } = useCommentStore();
+  const { votes, fetchVotes, castVote } = useVoteStore();
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -51,7 +47,7 @@ export default function QuestionDetail() {
           questionCollection,
           id as string
         );
-        setQuestion(res as unknown as Question); // Cast the response directly
+        setQuestion(res as unknown as Question);
       } catch (err) {
         console.error(err);
       } finally {
@@ -62,17 +58,25 @@ export default function QuestionDetail() {
     if (id) {
       fetchQuestion();
       fetchAnswers(id as string);
-      // Fetch comments for the main question initially
       fetchComments(CommentParentType.Question, id as string);
+
+      // fetch votes for question
+      fetchVotes("question", id as string);
     }
-  }, [id, fetchAnswers, fetchComments]);
+  }, [id, fetchAnswers, fetchComments, fetchVotes]);
+
+  // also fetch votes for answers when they load
+  useEffect(() => {
+    answers.forEach((ans) => {
+      fetchVotes("answer", ans.$id);
+    });
+  }, [answers, fetchVotes]);
 
   const handleAddAnswer = async () => {
     if (!newAnswer.trim()) return;
-
     try {
       await addAnswer(id as string, newAnswer);
-      setNewAnswer(""); // clear textarea after success
+      setNewAnswer("");
     } catch (err) {
       console.error("Failed to add answer:", err);
     }
@@ -83,11 +87,10 @@ export default function QuestionDetail() {
     parentId: string
   ) => {
     if (!newComment.trim() || !user) return;
-
     try {
       await addComment(newComment, parentType, parentId);
-      setNewComment(""); // clear comment textarea after success
-      setSelectedParentId(null); // Hide the comment form
+      setNewComment("");
+      setSelectedParentId(null);
     } catch (err) {
       console.error("Failed to add comment:", err);
     }
@@ -98,31 +101,75 @@ export default function QuestionDetail() {
   );
 
   if (loading) return <div className="p-6 text-white">Loading...</div>;
-
   if (!question)
     return <div className="p-6 text-red-500">Question not found</div>;
+
+  // calculate vote stats for question
+  const qUpvotes = Object.values(votes).filter(
+    (v) =>
+      v.type === "question" &&
+      v.typeId === question.$id &&
+      v.voteStatus === "upvoted"
+  ).length;
+  const qDownvotes = Object.values(votes).filter(
+    (v) =>
+      v.type === "question" &&
+      v.typeId === question.$id &&
+      v.voteStatus === "downvoted"
+  ).length;
+  const qScore = qUpvotes - qDownvotes;
+  const qUserVote = user ? votes[`question-${question.$id}-${user.$id}`] : null;
 
   return (
     <div className="p-6 max-w-5xl mx-auto text-white">
       <Navbar />
       <div className="h-[15vh] w-full"></div>
+
       {/* Question */}
       <div className="bg-slate-800/50 p-6 rounded-2xl shadow-md mb-6">
         <h1 className="text-2xl font-bold mb-2">{question.title}</h1>
         <p className="mb-2">{question.content}</p>
         <div className="flex justify-between items-center text-sm text-gray-400">
           <span>Asked by {question.authorName}</span>
-          <Button
-            variant="link"
-            size="sm"
-            onClick={() => setSelectedParentId(question.$id)}
-            className="text-gray-400 hover:text-white"
-          >
-            Add a comment
-          </Button>
+
+          {/* Voting */}
+          <div className="flex items-center space-x-2">
+            <button
+              disabled={!user}
+              onClick={() => castVote("question", question.$id, "upvoted")}
+              className={`px-2 py-1 rounded ${
+                qUserVote?.voteStatus === "upvoted"
+                  ? "text-green-400"
+                  : "text-gray-400 hover:text-green-300"
+              }`}
+            >
+              ▲
+            </button>
+            <span className="text-sm text-white">{qScore}</span>
+            <button
+              disabled={!user}
+              onClick={() => castVote("question", question.$id, "downvoted")}
+              className={`px-2 py-1 rounded ${
+                qUserVote?.voteStatus === "downvoted"
+                  ? "text-red-400"
+                  : "text-gray-400 hover:text-red-300"
+              }`}
+            >
+              ▼
+            </button>
+
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => setSelectedParentId(question.$id)}
+              className="text-gray-400 hover:text-white"
+            >
+              Add a comment
+            </Button>
+          </div>
         </div>
 
-        {/* Question Comments Section */}
+        {/* Question Comments */}
         {questionComments.length > 0 && (
           <div className="mt-4 space-y-2">
             {questionComments.map((comment) => (
@@ -170,6 +217,25 @@ export default function QuestionDetail() {
             const answerComments = comments.filter(
               (c) => c.type === CommentParentType.Answer && c.typeId === ans.$id
             );
+
+            // vote stats for answer
+            const aUpvotes = Object.values(votes).filter(
+              (v) =>
+                v.type === "answer" &&
+                v.typeId === ans.$id &&
+                v.voteStatus === "upvoted"
+            ).length;
+            const aDownvotes = Object.values(votes).filter(
+              (v) =>
+                v.type === "answer" &&
+                v.typeId === ans.$id &&
+                v.voteStatus === "downvoted"
+            ).length;
+            const aScore = aUpvotes - aDownvotes;
+            const aUserVote = user
+              ? votes[`answer-${ans.$id}-${user.$id}`]
+              : null;
+
             return (
               <div
                 key={ans.$id}
@@ -178,17 +244,43 @@ export default function QuestionDetail() {
                 <p>{ans.content}</p>
                 <div className="flex justify-between items-center text-sm text-gray-300">
                   <span>Answered by {ans.authorName}</span>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => setSelectedParentId(ans.$id)}
-                    className="text-gray-400 hover:text-white"
-                  >
-                    Add a comment
-                  </Button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      disabled={!user}
+                      onClick={() => castVote("answer", ans.$id, "upvoted")}
+                      className={`px-2 py-1 rounded ${
+                        aUserVote?.voteStatus === "upvoted"
+                          ? "text-green-400"
+                          : "text-gray-400 hover:text-green-300"
+                      }`}
+                    >
+                      ▲
+                    </button>
+                    <span className="text-sm text-white">{aScore}</span>
+                    <button
+                      disabled={!user}
+                      onClick={() => castVote("answer", ans.$id, "downvoted")}
+                      className={`px-2 py-1 rounded ${
+                        aUserVote?.voteStatus === "downvoted"
+                          ? "text-red-400"
+                          : "text-gray-400 hover:text-red-300"
+                      }`}
+                    >
+                      ▼
+                    </button>
+
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => setSelectedParentId(ans.$id)}
+                      className="text-gray-400 hover:text-white"
+                    >
+                      Add a comment
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Answer Comments Section */}
+                {/* Answer Comments */}
                 {answerComments.length > 0 && (
                   <div className="mt-4 space-y-2">
                     {answerComments.map((comment) => (
