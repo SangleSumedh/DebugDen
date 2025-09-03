@@ -69,7 +69,7 @@ touch .env
 # Add your Appwrite creds (endpoint, projectId, apiKey)
 # Add your OpenRouter API key (for AI answers)
 
-
+```
 ## 🗺️ Roadmap
 
 DebugDen is just getting started. Here’s what’s cooking:
