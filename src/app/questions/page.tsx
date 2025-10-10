@@ -164,7 +164,9 @@ export default function Home() {
             <div className="p-4 bg-blue-50/80 dark:bg-blue-900/30 backdrop-blur-sm border border-blue-200/60 dark:border-blue-800/60 rounded-xl">
               <p className="text-blue-800 dark:text-blue-200">
                 Search results for:{" "}
-                <span className="font-semibold">"{searchQuery}"</span>
+                <span className="font-semibold">
+                  &ldquo;{searchQuery}&rdquo;
+                </span>
                 <button
                   onClick={clearSearch}
                   className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium"
