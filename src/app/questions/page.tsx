@@ -1,12 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuestionStore } from "@/store/Question";
 import { useVoteStore } from "@/store/Vote";
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/Auth";
+
+interface Particle {
+  x: number;
+  y: number;
+  size: number;
+  speedX: number;
+  speedY: number;
+  opacity: number;
+  color: string;
+}
 
 export default function Home() {
   const router = useRouter();
@@ -19,6 +29,15 @@ export default function Home() {
   } = useQuestionStore();
   const { voteCounts, votes, fetchVotes, castVote } = useVoteStore();
   const { user } = useAuthStore();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<Particle[]>([]);
+  const animationRef = useRef<number | undefined>(undefined);
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted state to prevent hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch all questions on mount
   useEffect(() => {
@@ -30,115 +49,224 @@ export default function Home() {
     questions.forEach((q) => fetchVotes("question", q.$id));
   }, [questions, fetchVotes]);
 
+  // Initialize and animate particles - only on client side
+  useEffect(() => {
+    if (!mounted) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Set canvas size
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // Create particles
+    const createParticles = () => {
+      const particles: Particle[] = [];
+      const particleCount = Math.min(
+        100,
+        Math.floor((window.innerWidth * window.innerHeight) / 15000)
+      );
+
+      const colors = ["#22d3ee", "#818cf8", "#a5b4fc", "#cbd5e1", "#e0f2fe"];
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 3 + 1,
+          speedX: (Math.random() - 0.5) * 0.5,
+          speedY: (Math.random() - 0.5) * 0.5,
+          opacity: Math.random() * 0.6 + 0.2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        });
+      }
+      return particles;
+    };
+
+    particlesRef.current = createParticles();
+
+    // Animation loop
+    const animate = () => {
+      if (!ctx || !canvas) return;
+
+      // Clear with fade effect
+      const isDarkMode = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      ctx.fillStyle = isDarkMode
+        ? "rgba(20, 20, 30, 0.05)"
+        : "rgba(248, 250, 252, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Update and draw particles
+      particlesRef.current.forEach((particle, index) => {
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+
+        if (particle.x <= 0 || particle.x >= canvas.width)
+          particle.speedX *= -1;
+        if (particle.y <= 0 || particle.y >= canvas.height)
+          particle.speedY *= -1;
+
+        particle.opacity = 0.3 + Math.sin(Date.now() * 0.001 + index) * 0.3;
+
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${hexToRgb(particle.color)}, ${
+          particle.opacity
+        })`;
+        ctx.fill();
+
+        if (Math.random() > 0.7) {
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${hexToRgb(particle.color)}, ${
+            particle.opacity * 0.3
+          })`;
+          ctx.fill();
+        }
+      });
+
+      // Connections
+      for (let i = 0; i < particlesRef.current.length; i++) {
+        for (let j = i + 1; j < particlesRef.current.length; j++) {
+          const dx = particlesRef.current[i].x - particlesRef.current[j].x;
+          const dy = particlesRef.current[i].y - particlesRef.current[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 100) {
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(148, 163, 184, ${
+              0.15 * (1 - distance / 100)
+            })`;
+            ctx.lineWidth = 0.5;
+            ctx.moveTo(particlesRef.current[i].x, particlesRef.current[i].y);
+            ctx.lineTo(particlesRef.current[j].x, particlesRef.current[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Floating code-like symbols
+      if (Math.random() < 0.02) {
+        const symbols = [
+          "{}",
+          "[]",
+          "();",
+          "=>",
+          "<>",
+          "/*",
+          "*/",
+          "==",
+          "!==",
+          "++",
+        ];
+        const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+
+        ctx.font = "12px monospace";
+        ctx.fillStyle = `rgba(100, 116, 139, ${Math.random() * 0.3 + 0.1})`;
+        ctx.fillText(symbol, x, y);
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    // Helper to convert hex to rgb
+    function hexToRgb(hex: string) {
+      const bigint = parseInt(hex.replace("#", ""), 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `${r}, ${g}, ${b}`;
+    }
+
+    animate();
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
+  }, [mounted]); // Only run when mounted
+
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20 text-black dark:text-white transition-colors overflow-hidden">
-      {/* Particle Dust Background */}
-      <div className="absolute inset-0 opacity-30 dark:opacity-20">
-        <svg
-          width="100%"
-          height="100%"
-          xmlns="http://www.w3.org/2000/svg"
-          className="absolute inset-0"
-        >
-          <defs>
-            <radialGradient id="dustGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="currentColor" stopOpacity="0.1" />
-              <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-            </radialGradient>
-          </defs>
+      {/* Animated Canvas Background - Only render on client */}
+      {mounted && (
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 opacity-40 dark:opacity-20 transition-opacity duration-500"
+        />
+      )}
 
-          {/* Large background particles */}
-          {Array.from({ length: 50 }).map((_, i) => (
-            <circle
-              key={`large-${i}`}
-              cx={`${Math.random() * 100}%`}
-              cy={`${Math.random() * 100}%`}
-              r={Math.random() * 2 + 0.5}
-              fill="currentColor"
-              className="text-slate-300 dark:text-slate-600"
-              opacity={Math.random() * 0.3 + 0.1}
-            >
-              <animate
-                attributeName="opacity"
-                values={`${Math.random() * 0.3 + 0.1};${
-                  Math.random() * 0.5 + 0.2
-                };${Math.random() * 0.3 + 0.1}`}
-                dur={`${Math.random() * 10 + 5}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
-          ))}
+      {/* Static SVG Background (fallback) - Only render on client */}
+      {mounted && (
+        <div className="absolute inset-0 opacity-20 dark:opacity-10 pointer-events-none">
+          <svg
+            width="100%"
+            height="100%"
+            xmlns="http://www.w3.org/2000/svg"
+            className="absolute inset-0"
+          >
+            <defs>
+              <radialGradient id="dustGradient" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="currentColor" stopOpacity="0.1" />
+                <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+              </radialGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                <feMerge>
+                  <feMergeNode in="coloredBlur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-          {/* Medium particles */}
-          {Array.from({ length: 80 }).map((_, i) => (
-            <circle
-              key={`medium-${i}`}
-              cx={`${Math.random() * 100}%`}
-              cy={`${Math.random() * 100}%`}
-              r={Math.random() * 1 + 0.3}
-              fill="currentColor"
-              className="text-slate-400 dark:text-slate-500"
-              opacity={Math.random() * 0.2 + 0.1}
-            >
-              <animate
-                attributeName="opacity"
-                values={`${Math.random() * 0.2 + 0.1};${
-                  Math.random() * 0.3 + 0.15
-                };${Math.random() * 0.2 + 0.1}`}
-                dur={`${Math.random() * 8 + 4}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
-          ))}
-
-          {/* Small particles */}
-          {Array.from({ length: 120 }).map((_, i) => (
-            <circle
-              key={`small-${i}`}
-              cx={`${Math.random() * 100}%`}
-              cy={`${Math.random() * 100}%`}
-              r={Math.random() * 0.5 + 0.1}
-              fill="currentColor"
-              className="text-slate-500 dark:text-slate-400"
-              opacity={Math.random() * 0.15 + 0.05}
-            >
-              <animate
-                attributeName="opacity"
-                values={`${Math.random() * 0.15 + 0.05};${
-                  Math.random() * 0.25 + 0.1
-                };${Math.random() * 0.15 + 0.05}`}
-                dur={`${Math.random() * 6 + 3}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
-          ))}
-
-          {/* Floating particles with movement */}
-          {Array.from({ length: 30 }).map((_, i) => (
-            <circle
-              key={`float-${i}`}
-              cx={`${Math.random() * 100}%`}
-              cy={`${Math.random() * 100}%`}
-              r={Math.random() * 1.5 + 0.5}
-              fill="url(#dustGradient)"
-              className="text-blue-200 dark:text-blue-900"
-            >
-              <animate
-                attributeName="cx"
-                values={`${Math.random() * 100}%;${Math.random() * 100}%`}
-                dur={`${Math.random() * 20 + 10}s`}
-                repeatCount="indefinite"
-              />
-              <animate
-                attributeName="cy"
-                values={`${Math.random() * 100}%;${Math.random() * 100}%`}
-                dur={`${Math.random() * 15 + 8}s`}
-                repeatCount="indefinite"
-              />
-            </circle>
-          ))}
-        </svg>
-      </div>
+            {/* Animated circles */}
+            {Array.from({ length: 20 }).map((_, i) => (
+              <circle
+                key={`animated-${i}`}
+                cx={`${Math.random() * 100}%`}
+                cy={`${Math.random() * 100}%`}
+                r={Math.random() * 4 + 1}
+                fill="currentColor"
+                className="text-blue-300 dark:text-blue-700"
+                opacity={Math.random() * 0.3 + 0.1}
+                filter="url(#glow)"
+              >
+                <animate
+                  attributeName="r"
+                  values={`${Math.random() * 2 + 1};${Math.random() * 4 + 2};${
+                    Math.random() * 2 + 1
+                  }`}
+                  dur={`${Math.random() * 10 + 5}s`}
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  values={`${Math.random() * 0.2 + 0.1};${
+                    Math.random() * 0.4 + 0.2
+                  };${Math.random() * 0.2 + 0.1}`}
+                  dur={`${Math.random() * 8 + 4}s`}
+                  repeatCount="indefinite"
+                />
+              </circle>
+            ))}
+          </svg>
+        </div>
+      )}
 
       {/* Content */}
       <div className="relative z-10">
