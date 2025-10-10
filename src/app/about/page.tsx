@@ -19,7 +19,6 @@ import {
   Twitter,
   Linkedin,
 } from "lucide-react";
-import Image from "next/image";
 
 export default function AboutPage() {
   const router = useRouter();
@@ -128,9 +127,9 @@ export default function AboutPage() {
             </h1>
 
             <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 max-w-4xl mx-auto mb-8 leading-relaxed">
-              Where developers come together to learn, share, and grow. We're
-              building the most supportive and inclusive community for
-              programmers of all levels.
+              Where developers come together to learn, share, and grow.
+              We&apos;re building the most supportive and inclusive community
+              for programmers of all levels.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -163,7 +162,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-8"
           >
-            {stats.map((stat, index) => (
+            {stats.map((stat) => (
               <motion.div
                 key={stat.label}
                 variants={fadeInUp}
@@ -200,9 +199,9 @@ export default function AboutPage() {
               </h2>
               <p className="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
                 At DebugDen, we believe that everyone should have access to
-                quality programming education and a supportive community. We're
-                committed to breaking down barriers and creating opportunities
-                for developers at every stage of their journey.
+                quality programming education and a supportive community.
+                We&apos;re committed to breaking down barriers and creating
+                opportunities for developers at every stage of their journey.
               </p>
 
               <div className="space-y-4">
@@ -284,7 +283,7 @@ export default function AboutPage() {
               Why Choose DebugDen?
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto">
-              We've built a platform that puts community and learning first
+              We&apos;ve built a platform that puts community and learning first
             </p>
           </motion.div>
 
@@ -295,7 +294,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
           >
-            {features.map((feature, index) => (
+            {features.map((feature) => (
               <motion.div
                 key={feature.title}
                 variants={fadeInUp}
@@ -345,7 +344,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
-            {team.map((member, index) => (
+            {team.map((member) => (
               <motion.div
                 key={member.name}
                 variants={fadeInUp}

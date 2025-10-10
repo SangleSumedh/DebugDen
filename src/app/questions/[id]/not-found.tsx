@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function BlogNotFound() {
   return (
     <div className="flex h-screen flex-col items-center justify-center text-center">
@@ -5,9 +7,9 @@ export default function BlogNotFound() {
       <p className="mt-2 text-gray-600">
         The Question you’re looking for doesn’t exist or was removed.
       </p>
-      <a href="/blog" className="mt-4 rounded bg-blue-600 px-4 py-2 text-white">
+      <Link href="/blog" className="mt-4 rounded bg-blue-600 px-4 py-2 text-white">
         Back to /Questions
-      </a>
+      </Link>
     </div>
   );
 }
