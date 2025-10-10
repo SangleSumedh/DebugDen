@@ -4,7 +4,6 @@ import { db, commentCollection } from "@/models/name";
 import { ID, Query, Models } from "appwrite";
 import { useAuthStore } from "./Auth";
 
-
 export enum CommentParentType {
   Answer = "answer",
   Question = "question",
@@ -124,13 +123,6 @@ export const useCommentStore = create<CommentStore>((set, get) => ({
   updateComment: async (commentId, content) => {
     set({ loading: true, error: null });
     try {
-      const updatedDoc = await databases.updateDocument(
-        db,
-        commentCollection,
-        commentId,
-        { content }
-      );
-
       set((state) => ({
         comments: state.comments.map((comment) =>
           comment.$id === commentId ? { ...comment, content } : comment

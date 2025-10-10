@@ -2,12 +2,7 @@
 
 import { create } from "zustand";
 import { databases } from "@/models/client/config";
-import {
-  db,
-  questionCollection,
-  answerCollection,
-  voteCollection,
-} from "@/models/name";
+import { db, voteCollection } from "@/models/name";
 import { ID, Query } from "appwrite";
 import { useAuthStore } from "./Auth";
 
@@ -64,8 +59,9 @@ export const useVoteStore = create<VoteStore>((set, get) => ({
         },
         loading: false,
       }));
-    } catch (err: any) {
-      set({ error: err.message, loading: false });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      set({ error: message, loading: false });
     }
   },
 
@@ -82,7 +78,7 @@ export const useVoteStore = create<VoteStore>((set, get) => ({
     };
 
     // 1️⃣ Optimistically update votes & counts
-    let newCounts = { ...currentCounts };
+    const newCounts = { ...currentCounts };
     let newVote: string | null = voteStatus;
 
     if (!currentVote) {
@@ -141,17 +137,16 @@ export const useVoteStore = create<VoteStore>((set, get) => ({
 
       // Optionally, re-fetch counts from Appwrite to be 100% accurate
       await get().fetchVotes(type, typeId);
-    } catch (err: any) {
-      console.error("Vote failed:", err);
-
-      // Revert UI if Appwrite fails
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Vote failed:", message);
       set((state) => ({
-        votes: { ...state.votes, [key]: currentVote }, // revert to previous vote
+        votes: { ...state.votes, [key]: currentVote }, // revert
         voteCounts: {
           ...state.voteCounts,
           [`${type}-${typeId}`]: currentCounts,
-        }, // revert counts
-        error: err.message,
+        }, // revert
+        error: message,
       }));
     }
   },
