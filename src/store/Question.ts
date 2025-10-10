@@ -3,8 +3,6 @@ import { ID } from "appwrite";
 import { databases } from "@/models/client/config";
 import { db, questionCollection } from "@/models/name";
 import { useAuthStore } from "./Auth";
-import { Models } from "appwrite";
-import { json } from "stream/consumers";
 
 interface Question {
   $id: string;
@@ -19,8 +17,10 @@ interface Question {
 
 interface QuestionState {
   questions: Question[];
+  filteredQuestions: Question[];
   loading: boolean;
   error: string | null;
+  searchQuery: string;
 
   fetchQuestions: () => Promise<void>;
   getQuestionById: (id: string) => Promise<Question | null>;
@@ -31,6 +31,8 @@ interface QuestionState {
     attachmentId?: string
   ) => Promise<void>;
   deleteQuestion: (id: string) => Promise<void>;
+  searchQuestions: (query: string) => void;
+  clearSearch: () => void;
 }
 
 interface QuestionDocument {
@@ -46,8 +48,10 @@ interface QuestionDocument {
 
 export const useQuestionStore = create<QuestionState>((set, get) => ({
   questions: [],
+  filteredQuestions: [],
   loading: false,
   error: null,
+  searchQuery: "",
 
   fetchQuestions: async () => {
     set({ loading: true, error: null });
@@ -68,7 +72,6 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
             $createdAt: d.$createdAt ?? new Date().toISOString(),
           };
         }
-        // fallback if doc isn't an object
         return {
           $id: "",
           title: "",
@@ -81,15 +84,48 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         };
       });
 
-      set({ questions, loading: false });
+      set({ questions, filteredQuestions: questions, loading: false });
     } catch (err: unknown) {
-      let message =
-        "An unknown error occurred while creating question document";
+      let message = "An unknown error occurred while fetching questions";
       if (err instanceof Error) {
         message = err.message;
       }
       set({ error: message, loading: false });
     }
+  },
+
+  searchQuestions: (query: string) => {
+    const { questions } = get();
+
+    if (!query.trim()) {
+      set({ filteredQuestions: questions, searchQuery: "" });
+      return;
+    }
+
+    const lowercasedQuery = query.toLowerCase().trim();
+
+    const filtered = questions.filter(
+      (question) =>
+        question.title.toLowerCase().includes(lowercasedQuery) ||
+        question.content.toLowerCase().includes(lowercasedQuery) ||
+        question.tags.some((tag) =>
+          tag.toLowerCase().includes(lowercasedQuery)
+        ) ||
+        question.authorName.toLowerCase().includes(lowercasedQuery)
+    );
+
+    set({
+      filteredQuestions: filtered,
+      searchQuery: query,
+    });
+  },
+
+  clearSearch: () => {
+    const { questions } = get();
+    set({
+      filteredQuestions: questions,
+      searchQuery: "",
+    });
   },
 
   getQuestionById: async (id) => {
@@ -143,25 +179,11 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         $createdAt: newDoc.$createdAt,
       };
 
-      set({ questions: [...get().questions, newQuestion] });
-
-      // try {
-      //   await fetch("/api/ai-generated", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({
-      //       questionId: newDoc.$id,
-      //       questionContent: newDoc.content,
-      //     }),
-      //   });
-      // } catch (err: unknown) {
-      //   const message =
-      //     err instanceof Error
-      //       ? err.message
-      //       : "unknown error occured while requesting ai response";
-      // }
+      const updatedQuestions = [...get().questions, newQuestion];
+      set({
+        questions: updatedQuestions,
+        filteredQuestions: updatedQuestions,
+      });
     } catch (err: unknown) {
       let message = "An unknown error occurred while creating question";
       if (err instanceof Error) {
@@ -174,7 +196,11 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
   deleteQuestion: async (id) => {
     try {
       await databases.deleteDocument(db, questionCollection, id);
-      set({ questions: get().questions.filter((q) => q.$id !== id) });
+      const updatedQuestions = get().questions.filter((q) => q.$id !== id);
+      set({
+        questions: updatedQuestions,
+        filteredQuestions: updatedQuestions,
+      });
     } catch (err: unknown) {
       let message = "An unknown error while deleting question occurred";
       if (err instanceof Error) {
