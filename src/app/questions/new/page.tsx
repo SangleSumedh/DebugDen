@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Sparkles } from "lucide-react";
+import ParticleBackground from "@/app/components/ParticleBackground";
 
 export default function NewQuestionPage() {
   const { addQuestion, error, loading } = useQuestionStore();
@@ -38,8 +39,7 @@ export default function NewQuestionPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20 transition-colors">
-      <Navbar />
-
+      <ParticleBackground />
       {/* Main content with proper spacing */}
       <main className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
