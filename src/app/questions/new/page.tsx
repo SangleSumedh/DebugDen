@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuestionStore } from "@/store/Question";
+import { useAuthStore } from "@/store/Auth";
 import Navbar from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -13,16 +14,36 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import ParticleBackground from "@/app/components/ParticleBackground";
 
 export default function NewQuestionPage() {
+  const { user } = useAuthStore();
+
   const { addQuestion, error, loading } = useQuestionStore();
   const router = useRouter();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
+  const [mounted, setMounted] = useState(false);
+
+  // Prevent hydration issues
+  useEffect(() => setMounted(true), []);
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (mounted && !user) {
+      router.push("/login");
+    }
+  }, [mounted, user, router]);
+
+  if (!mounted || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (loading) return;
 
     const tagList = tags
@@ -37,10 +58,19 @@ export default function NewQuestionPage() {
     }
   };
 
+  if (!mounted ||  !user) {
+    // Show loading while checking auth
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  // User is authenticated, render the form
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20 transition-colors">
       <ParticleBackground />
-      {/* Main content with proper spacing */}
       <main className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           {/* Back button */}
