@@ -103,7 +103,7 @@ function Footer() {
           </div>
         </div>
 
-        {/* Newsletter Section */}
+        {/* Newsletter Section
         <div className="mt-16 pt-8 border-t border-slate-200/50 dark:border-slate-800/50">
           <div className="max-w-md">
             <h4 className="font-semibold text-slate-900 dark:text-white mb-4 text-lg flex items-center gap-2">
@@ -125,7 +125,7 @@ function Footer() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Bottom Bar */}
@@ -135,7 +135,7 @@ function Footer() {
             <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm">
               <span>© {currentYear} DebugDen. Made with</span>
               <Heart className="w-4 h-4 text-rose-500 fill-current" />
-              <span>for the developer community.</span>
+              <span>for the developer community. - Sumedh Sangle</span>
             </div>
           </div>
         </div>

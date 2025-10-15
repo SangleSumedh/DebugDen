@@ -84,7 +84,17 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         };
       });
 
-      set({ questions, filteredQuestions: questions, loading: false });
+      // Sort questions by creation date (newest first)
+      const sortedQuestions = questions.sort(
+        (a, b) =>
+          new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime()
+      );
+
+      set({
+        questions: sortedQuestions,
+        filteredQuestions: sortedQuestions,
+        loading: false,
+      });
     } catch (err: unknown) {
       let message = "An unknown error occurred while fetching questions";
       if (err instanceof Error) {
@@ -179,10 +189,17 @@ export const useQuestionStore = create<QuestionState>((set, get) => ({
         $createdAt: newDoc.$createdAt,
       };
 
-      const updatedQuestions = [...get().questions, newQuestion];
+      const updatedQuestions = [newQuestion, ...get().questions]; // Add new question at the beginning
+
+      // Sort to maintain order (though new question should already be first)
+      const sortedQuestions = updatedQuestions.sort(
+        (a, b) =>
+          new Date(b.$createdAt).getTime() - new Date(a.$createdAt).getTime()
+      );
+
       set({
-        questions: updatedQuestions,
-        filteredQuestions: updatedQuestions,
+        questions: sortedQuestions,
+        filteredQuestions: sortedQuestions,
       });
     } catch (err: unknown) {
       let message = "An unknown error occurred while creating question";
