@@ -20,18 +20,12 @@ interface IAuthStore {
   login(
     email: string,
     password: string
-  ): Promise<{
-    success: boolean;
-    error?: AppwriteException | null;
-  }>;
+  ): Promise<{ success: boolean; error?: AppwriteException | null }>;
   createAccount(
     name: string,
     email: string,
     password: string
-  ): Promise<{
-    success: boolean;
-    error?: AppwriteException | null;
-  }>;
+  ): Promise<{ success: boolean; error?: AppwriteException | null }>;
   logout(): Promise<void>;
 }
 
@@ -58,19 +52,29 @@ export const useAuthStore = create<IAuthStore>()(
 
       async login(email: string, password: string) {
         try {
+          // Delete existing session if present
+          try {
+            await account.deleteSession("current");
+          } catch {
+            // ignore if no session exists
+          }
 
-          await account.deleteSession("current");
-
+          // Create new session
           const session = await account.createEmailPasswordSession(
             email,
             password
           );
+
+          // Fetch user info and JWT after session exists
           const [user, { jwt }] = await Promise.all([
             account.get<UserPrefs>(),
             account.createJWT(),
           ]);
-          if (!user.prefs?.reputation)
+
+          if (!user.prefs?.reputation) {
             await account.updatePrefs<UserPrefs>({ reputation: 0 });
+          }
+
           set({ session, user, jwt });
           return { success: true };
         } catch (error) {
@@ -84,11 +88,18 @@ export const useAuthStore = create<IAuthStore>()(
 
       async createAccount(name: string, email: string, password: string) {
         try {
+          // Delete any existing session
+          try {
+            await account.deleteSession("current");
+          } catch {
+            // ignore if no session exists
+          }
 
-          await account.deleteSession("current");
-
+          // Create new account
           await account.create(ID.unique(), email, password, name);
-          return { success: true };
+
+          // Automatically log in after registration
+          return await this.login(email, password);
         } catch (error) {
           console.log(error);
           return {
