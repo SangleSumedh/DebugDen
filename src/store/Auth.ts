@@ -58,6 +58,9 @@ export const useAuthStore = create<IAuthStore>()(
 
       async login(email: string, password: string) {
         try {
+
+          await account.deleteSession("current");
+
           const session = await account.createEmailPasswordSession(
             email,
             password
@@ -81,6 +84,9 @@ export const useAuthStore = create<IAuthStore>()(
 
       async createAccount(name: string, email: string, password: string) {
         try {
+
+          await account.deleteSession("current");
+
           await account.create(ID.unique(), email, password, name);
           return { success: true };
         } catch (error) {
