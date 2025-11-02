@@ -1,3 +1,72 @@
+%%{init: {'flowchart': {'htmlLabels': false}}}%%
+graph TD
+    %% START NODE
+    start(start) --> A1;
+
+    %% SWIMLANES DEFINITION
+    subgraph User
+        A1[User opens the App] --> A2{Login / Sign Up};
+        A2 --> D1;
+        A3[Set Interests & Language] --> A4;
+        A7[Participate in Timed Video Call] --> A8;
+        A8 --> D2;
+        A10[Provide Feedback & Rating] --> D3;
+        A11[Choose Continue Matching / Exit] --> D4;
+    end
+
+    subgraph System
+        D1{Auth Validated?};
+        D1 -- No --> A2;
+        D1 -- Yes --> A3;
+        A4[Store Preferences & Activate Account] --> M1;
+        M4[Display "Searching" State] --> M2;
+        M5[Initiate Timed Video Call] --> V2;
+        V3[Session Timer Ends] --> A8;
+        A9[Collect & Store Feedback] --> A11;
+        D4 -- Exit --> S1[Log User Out];
+    end
+
+    subgraph Matching Algorithm
+        M1[Receive Preferences] --> M2;
+        M2[Execute Matching Logic] --> D5{Match Found?};
+        D5 -- No --> M4;
+        D5 -- Yes --> V1;
+    end
+
+    subgraph Video Service
+        V1[Establish Connection] --> M5;
+        V2[Stream Video & Audio] --> V3;
+    end
+
+    %% DECISIONS AND FLOW
+
+    %% User Action After Session
+    D2{Continue Chat?};
+    D2 -- Yes / Continue Chat --> A10;
+    D2 -- No / Skip User --> A10;
+
+    %% Session End Flow
+    A10 --> A9;
+    
+    %% Repeat or Exit
+    D4{Continue Matching?};
+    D4 -- Continue --> M1;
+
+    %% END NODE
+    S1 --> end((stop));
+
+    style start fill:#5cb85c,stroke:#3c763d
+    style end fill:#d9534f,stroke:#a94442
+    
+    %% Connect the User/System activities after Session End
+    A9 --> A11;
+
+
+
+
+
+
+
 # 🐞 DebugDen — A Safe Haven for Stuck Devs and Code Sleuths
 
 Welcome to **DebugDen**: Not your grandma’s Stack Overflow.  
