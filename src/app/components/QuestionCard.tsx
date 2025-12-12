@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { UserPrefs } from "@/store/Auth";
 import { Models } from "node-appwrite";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 interface Question {
   $id: string;
@@ -31,6 +32,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onVote,
   user,
 }) => {
+  const router = useRouter(); // Initialize router
   const cardRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -42,7 +44,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   return (
     <div
       ref={cardRef}
-      className="relative p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-sm hover:shadow-2xl dark:shadow-slate-900/50 transition-all duration-500 rounded-2xl hover:border-transparent group overflow-hidden"
+      // Added cursor-pointer and onClick handler for the whole card
+      className="cursor-pointer relative p-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-sm hover:shadow-2xl dark:shadow-slate-900/50 transition-all duration-500 rounded-2xl hover:border-transparent group overflow-hidden"
+      onClick={() => router.push(`/questions/${question.$id}`)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -67,8 +71,12 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       <div className="relative z-10">
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1 min-w-0">
-            {/* Question Title with Gradient Text on Hover */}
-            <Link href={`/questions/${question.$id}`}>
+            {/* Question Title */}
+            {/* Added stopPropagation to Link to prevent double-navigation logic */}
+            <Link
+              href={`/questions/${question.$id}`}
+              onClick={(e) => e.stopPropagation()}
+            >
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300 line-clamp-2">
                 {question.title}
               </h2>
@@ -89,9 +97,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
           {/* Voting UI */}
           <div className="flex flex-col items-center space-y-2 flex-shrink-0">
+            {/* UPVOTE BUTTON */}
             <button
               disabled={!user}
-              onClick={() => onVote("upvoted")}
+              onClick={(e) => {
+                e.stopPropagation(); // Stop click from bubbling to card
+                onVote("upvoted");
+              }}
               className={`p-2 rounded-xl transition-all duration-300 ${
                 userVote === "upvoted"
                   ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 shadow-lg shadow-emerald-500/20"
@@ -120,7 +132,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               </svg>
             </button>
 
-            {/* Score with animated change */}
+            {/* Score */}
             <span
               className={`text-sm font-bold px-3 py-1 rounded-full transition-all duration-300 ${
                 voteCounts.score > 0
@@ -133,9 +145,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               {voteCounts.score}
             </span>
 
+            {/* DOWNVOTE BUTTON */}
             <button
               disabled={!user}
-              onClick={() => onVote("downvoted")}
+              onClick={(e) => {
+                e.stopPropagation(); // Stop click from bubbling to card
+                onVote("downvoted");
+              }}
               className={`p-2 rounded-xl transition-all duration-300 ${
                 userVote === "downvoted"
                   ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 shadow-lg shadow-rose-500/20"
@@ -165,7 +181,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             </button>
           </div>
         </div>
-
       </div>
 
       {/* Background Pattern */}

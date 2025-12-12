@@ -8,12 +8,11 @@ import { useVoteStore } from "@/store/Vote";
 import { useAuthStore } from "@/store/Auth";
 import ParticleBackground from "../components/ParticleBackground";
 import QuestionCard from "../components/QuestionCard";
+import { Filter } from "lucide-react";
 
 // =====================
 // Motion Variants
 // =====================
-
-// Container for staggered children
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -22,7 +21,6 @@ const containerVariants: Variants = {
   },
 };
 
-// Individual question card animation
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -31,67 +29,6 @@ const itemVariants: Variants = {
     transition: { duration: 0.5, ease: "easeOut" },
   },
 };
-
-// Button hover/tap animation
-const buttonVariants: Variants = {
-  initial: { scale: 1 },
-  hover: { scale: 1.05, transition: { duration: 0.2 } },
-  tap: { scale: 0.95, transition: { duration: 0.1 } },
-};
-
-// Search results animation
-const searchResultsVariants: Variants = {
-  hidden: { opacity: 0, height: 0, marginBottom: 0 },
-  visible: {
-    opacity: 1,
-    height: "auto",
-    marginBottom: "1rem",
-    transition: { duration: 0.3, ease: "easeOut" },
-  },
-};
-
-// Empty state animation
-const emptyStateVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5, ease: "easeOut" },
-  },
-};
-
-// Loading animation container
-const loadingVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-
-// Individual loading item
-const loadingItemVariants: Variants = {
-  hidden: { opacity: 0.5 },
-  visible: {
-    opacity: 1,
-    transition: { duration: 0.8, repeat: Infinity, repeatType: "reverse" },
-  },
-};
-
-// Page transition animation
-const pageTransitionVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
-    },
-  },
-  exit: { opacity: 0, y: -20, transition: { duration: 0.4 } },
-};
-
-// =====================
-// Home Page Component
-// =====================
 
 export default function Home() {
   const router = useRouter();
@@ -105,250 +42,164 @@ export default function Home() {
   const { voteCounts, votes, fetchVotes, castVote } = useVoteStore();
   const { user } = useAuthStore();
   const [mounted, setMounted] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("latest");
 
-  // Mount check to avoid hydration issues
   useEffect(() => setMounted(true), []);
-
-  // Fetch questions on mount
   useEffect(() => {
     fetchQuestions();
   }, [fetchQuestions]);
-
-  // Fetch votes for each question
   useEffect(() => {
     questions.forEach((q) => fetchVotes("question", q.$id));
   }, [questions, fetchVotes]);
 
   const handleVote = (questionId: string, type: "upvoted" | "downvoted") => {
-    if (!user) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
     castVote("question", questionId, type);
   };
 
+  // Prevent hydration mismatch
   if (!mounted)
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20" />
-    );
+    return <div className="min-h-screen bg-slate-50 dark:bg-[#0B0C10]" />;
 
   return (
     <motion.div
       initial="hidden"
       animate="visible"
-      exit="exit"
-      variants={pageTransitionVariants}
-      className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20 text-black dark:text-white transition-colors overflow-hidden"
+      className="relative min-h-screen bg-slate-50 dark:bg-[#0B0C10] text-slate-900 dark:text-slate-100 selection:bg-blue-500/30 transition-colors duration-300"
     >
       <ParticleBackground />
-      <div className="relative z-10">
-        <div className="h-[15vh] w-full" />
 
-        {/* Action Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative z-10 max-w-5xl mx-auto px-4 py-4 flex justify-between items-center"
-        >
-          <motion.h1
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-2xl font-bold text-slate-900 dark:text-white"
-          >
-            All Questions
-          </motion.h1>
-          <motion.button
-            variants={buttonVariants}
-            initial="initial"
-            whileHover="hover"
-            whileTap="tap"
-            onClick={() => router.push("/questions/new")}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
-          >
-            Ask Question
-          </motion.button>
-        </motion.div>
+      {/* ================= HERO SPACER ================= */}
+      <div className="relative z-10 py-12 sm:pt-20 sm:pb-12 "></div>
 
-        {/* Search Results */}
+      {/* ================= MAIN CONTENT ================= */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pb-20">
+        {/* Controls Bar */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 p-4 rounded-xl shadow-sm dark:shadow-none transition-all mb-6">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+              Top Questions
+            </h2>
+            <span className="bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs px-2 py-1 rounded-full border border-blue-200 dark:border-blue-500/20">
+              {questions.length} results
+            </span>
+          </div>
+
+          <div className="flex gap-2">
+            {["latest"].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`px-3 py-1.5 text-sm rounded-lg capitalize transition-all ${
+                  activeFilter === filter
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+            <button
+              onClick={() => router.push("/questions/new")}
+              className="ml-2 px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-black text-sm font-semibold rounded-lg hover:bg-slate-700 dark:hover:bg-slate-200 transition-colors shadow-md"
+            >
+              Ask Question
+            </button>
+          </div>
+        </div>
+
+        {/* Search Results Context */}
         <AnimatePresence>
           {searchQuery && (
             <motion.div
-              variants={searchResultsVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              className="relative z-10 max-w-5xl mx-auto px-4"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
             >
-              <div className="p-4 bg-blue-50/80 dark:bg-blue-900/30 backdrop-blur-sm border border-blue-200/60 dark:border-blue-800/60 rounded-xl">
-                <p className="text-blue-800 dark:text-blue-200">
-                  Search results for:{" "}
-                  <span className="font-semibold">
-                    &ldquo;{searchQuery}&rdquo;
-                  </span>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={clearSearch}
-                    className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline font-medium"
-                  >
-                    Clear search
-                  </motion.button>
-                </p>
-                <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                  Found {questions.length} question
-                  {questions.length !== 1 ? "s" : ""}
-                </p>
+              <div className="p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl flex justify-between items-center mb-6">
+                <span className="text-amber-700 dark:text-amber-200">
+                  Results for{" "}
+                  <span className="font-bold">&quot;{searchQuery}&quot;</span>
+                </span>
+                <button
+                  onClick={clearSearch}
+                  className="text-sm text-amber-600 dark:text-amber-400 hover:underline"
+                >
+                  Clear Search
+                </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Questions List */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 py-6">
-          {loading ? (
-            <motion.div
-              variants={loadingVariants}
-              initial="hidden"
-              animate="visible"
-              className="space-y-4"
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="h-48 rounded-xl bg-slate-200 dark:bg-white/5 animate-pulse border border-slate-300 dark:border-white/5"
+              />
+            ))}
+          </div>
+        ) : questions.length === 0 ? (
+          <div className="text-center py-20 bg-white dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 border-dashed shadow-sm">
+            <div className="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Filter className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+              No questions found
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6">
+              Be the first to ask about this topic!
+            </p>
+            <button
+              onClick={() => router.push("/questions/new")}
+              className="px-6 py-2 bg-blue-600 rounded-lg text-white font-medium hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20"
             >
-              {[1, 2, 3, 4].map((i) => (
-                <motion.div
-                  key={i}
-                  variants={loadingItemVariants}
-                  className="p-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-slate-700/50 shadow-sm"
-                >
-                  <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded w-3/4 mb-4" />
-                  <div className="h-4 bg-slate-200 dark:bg-slate-600 rounded w-full mb-2" />
-                  <div className="h-4 bg-slate-200 dark:bg-slate-600 rounded w-5/6" />
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : questions.length === 0 ? (
-            <motion.div
-              variants={emptyStateVariants}
-              initial="hidden"
-              animate="visible"
-              className="text-center py-12"
-            >
-              {/* Empty state icon and text */}
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ duration: 0.5, type: "spring", bounce: 0.5 }}
-                className="inline-flex items-center justify-center w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full mb-4"
-              >
-                <svg
-                  className="w-8 h-8 text-slate-400 dark:text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M11 14H9a2 2 0 01-2-2V9a2 2 0 012-2h5a2 2 0 012 2v1"
-                  />
-                </svg>
-              </motion.div>
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-slate-600 dark:text-gray-400 text-lg mb-4"
-              >
-                {searchQuery
-                  ? "No questions found matching your search."
-                  : "No questions yet."}
-              </motion.p>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                {searchQuery ? (
-                  <motion.button
-                    variants={buttonVariants}
-                    initial="initial"
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={clearSearch}
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline font-medium transition-colors"
-                  >
-                    Clear search
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    variants={buttonVariants}
-                    initial="initial"
-                    whileHover="hover"
-                    whileTap="tap"
-                    onClick={() => router.push("/questions/new")}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
-                  >
-                    Be the first to ask!
-                  </motion.button>
-                )}
-              </motion.div>
-            </motion.div>
-          ) : (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="space-y-6"
-            >
-              <AnimatePresence mode="popLayout">
-                {questions.map((q) => {
-                  const counts = voteCounts[`question-${q.$id}`] || {
-                    upvotes: 0,
-                    downvotes: 0,
-                    score: 0,
-                  };
-                  const userVote = user
-                    ? (votes[`question-${q.$id}-${user.$id}`] as
-                        | "upvoted"
-                        | "downvoted"
-                        | null) ?? null
-                    : null;
+              Ask a Question
+            </button>
+          </div>
+        ) : (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-4"
+          >
+            <AnimatePresence mode="popLayout">
+              {questions.map((q) => {
+                const counts = voteCounts[`question-${q.$id}`] || {
+                  upvotes: 0,
+                  downvotes: 0,
+                  score: 0,
+                };
+                const userVote = user
+                  ? (votes[`question-${q.$id}-${user.$id}`] as
+                      | "upvoted"
+                      | "downvoted"
+                      | null) ?? null
+                  : null;
 
-                  return (
-                    <motion.div
-                      key={q.$id}
-                      variants={itemVariants}
-                      layout
-                      initial="hidden"
-                      animate="visible"
-                      exit={{
-                        opacity: 0,
-                        x: -100,
-                        transition: { duration: 0.3 },
-                      }}
-                      whileHover={{
-                        scale: 1.01,
-                        transition: { duration: 0.2 },
-                      }}
-                    >
-                      <QuestionCard
-                        question={q}
-                        voteCounts={counts}
-                        userVote={userVote}
-                        onVote={(type) => handleVote(q.$id, type)}
-                        user={user}
-                      />
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </div>
+                return (
+                  <motion.div key={q.$id} variants={itemVariants} layout>
+                    <QuestionCard
+                      question={q}
+                      voteCounts={counts}
+                      userVote={userVote}
+                      onVote={(type) => handleVote(q.$id, type)}
+                      user={user}
+                    />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   );

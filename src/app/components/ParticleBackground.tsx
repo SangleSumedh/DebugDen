@@ -1,192 +1,186 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useTheme } from "next-themes";
+import { useEffect, useRef, useState } from "react";
 
 const ParticleBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number | undefined>(undefined);
   const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+
+  // Track mouse position
+  const mouse = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     setMounted(true);
 
-    if (!canvasRef.current) return;
+    const handleMouseMove = (event: MouseEvent) => {
+      mouse.current.x = event.clientX;
+      mouse.current.y = event.clientY;
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas size
+    let animationFrameId: number;
+    let particles: Particle[] = [];
+
+    // Configuration
+    const particleCount = window.innerWidth < 768 ? 30 : 60;
+    const connectionDistance = 140;
+    const mouseRepelDistance = 200;
+
+    const colors = {
+      light: ["#2563eb", "#9333ea", "#06b6d4"],
+      dark: ["#60a5fa", "#c084fc", "#22d3ee"],
+    };
+
+    const getColors = () => (theme === "dark" ? colors.dark : colors.light);
+
+    // 1. DEFINE CLASS
+    class Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      color: string;
+      originalX: number;
+      originalY: number;
+
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.originalX = this.x;
+        this.originalY = this.y;
+        // Reduced speed for a calm background effect
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.size = Math.random() * 2 + 1;
+        const currentColors = getColors();
+        this.color =
+          currentColors[Math.floor(Math.random() * currentColors.length)];
+      }
+
+      update() {
+        // --- 1. RESTORED IDLE MOVEMENT ---
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // --- 2. WALL BOUNCE (Required for movement) ---
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+        // --- 3. MOUSE INTERACTION ---
+        const dx = mouse.current.x - this.x;
+        const dy = mouse.current.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < mouseRepelDistance) {
+          const forceDirectionX = dx / distance;
+          const forceDirectionY = dy / distance;
+          const force = (mouseRepelDistance - distance) / mouseRepelDistance;
+          const repelStrength = 3;
+
+          // Push away from mouse
+          this.x -= forceDirectionX * force * repelStrength;
+          this.y -= forceDirectionY * force * repelStrength;
+        }
+        // Note: Removed the "return to original position" logic because
+        // free-floating particles don't have a fixed original position.
+      }
+
+      draw() {
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    }
+
+    // 2. DEFINE FUNCTIONS
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function connectParticles() {
+      if (!ctx) return;
+      for (let a = 0; a < particles.length; a++) {
+        for (let b = a; b < particles.length; b++) {
+          const p1 = particles[a];
+          const p2 = particles[b];
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < connectionDistance) {
+            const opacity = 1 - distance / connectionDistance;
+            ctx.strokeStyle =
+              theme === "dark"
+                ? `rgba(148, 163, 184, ${opacity * 0.2})`
+                : `rgba(71, 85, 105, ${opacity * 0.15})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function animate() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((particle) => {
+        particle.update();
+        particle.draw();
+      });
+
+      connectParticles();
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      initParticles();
     };
-    resizeCanvas();
+
     window.addEventListener("resize", resizeCanvas);
-
-    // Shape types
-    type ShapeType = "circle" | "triangle" | "square" | "hexagon";
-
-    interface Shape {
-      x: number;
-      y: number;
-      size: number;
-      speedX: number;
-      speedY: number;
-      rotation: number;
-      rotationSpeed: number;
-      opacity: number;
-      type: ShapeType;
-      color: string;
-    }
-
-    const shapes: Shape[] = [];
-    const shapeCount = 15;
-
-    const theme: string = localStorage.getItem("theme") ?? "dark";
-
-    // Colors for light and dark mode
-    const lightColors = [
-      "#ff6ec7", // hot pink
-      "#ffc300", // bright yellow
-      "#29b6f6", // electric blue
-      "#4caf50", // vivid green
-      "#ff7043", // tangerine
-    ];
-
-    const darkColors = [
-      "#d500f9", // deep violet
-      "#00e5ff", // cyan
-      "#76ff03", // neon green
-      "#ff1744", // bright red
-      "#ff9100", // orange glow
-    ];
-    // Initialize shapes
-    const initShapes = () => {
-      for (let i = 0; i < shapeCount; i++) {
-        const isDark = theme === "dark" ? true : false;
-        const colors = isDark ? darkColors : lightColors;
-
-        shapes.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          size: Math.random() * 80 + 40,
-          speedX: (Math.random() - 0.5) * 0.5,
-          speedY: (Math.random() - 0.5) * 0.5,
-          rotation: Math.random() * 360,
-          rotationSpeed: (Math.random() - 0.5) * 0.5,
-          opacity: Math.random() * 0.3 + 0.1,
-          type: ["circle", "triangle", "square", "hexagon"][
-            Math.floor(Math.random() * 4)
-          ] as ShapeType,
-          color: colors[Math.floor(Math.random() * colors.length)],
-        });
-      }
-    };
-
-    // Draw shapes
-    const drawShape = (shape: Shape) => {
-      ctx.save();
-      ctx.translate(shape.x, shape.y);
-      ctx.rotate((shape.rotation * Math.PI) / 180);
-      ctx.globalAlpha = shape.opacity;
-      ctx.fillStyle = shape.color;
-      ctx.strokeStyle = shape.color;
-      ctx.lineWidth = 1;
-
-      switch (shape.type) {
-        case "circle":
-          ctx.beginPath();
-          ctx.arc(0, 0, shape.size / 2, 0, Math.PI * 2);
-          ctx.fill();
-          break;
-
-        case "triangle":
-          ctx.beginPath();
-          ctx.moveTo(0, -shape.size / 2);
-          ctx.lineTo(shape.size / 2, shape.size / 2);
-          ctx.lineTo(-shape.size / 2, shape.size / 2);
-          ctx.closePath();
-          ctx.fill();
-          break;
-
-        case "square":
-          ctx.fillRect(
-            -shape.size / 2,
-            -shape.size / 2,
-            shape.size,
-            shape.size
-          );
-          break;
-
-        case "hexagon":
-          ctx.beginPath();
-          for (let i = 0; i < 6; i++) {
-            const angle = (i * 60 * Math.PI) / 180;
-            const x = (shape.size / 2) * Math.cos(angle);
-            const y = (shape.size / 2) * Math.sin(angle);
-            if (i === 0) {
-              ctx.moveTo(x, y);
-            } else {
-              ctx.lineTo(x, y);
-            }
-          }
-          ctx.closePath();
-          ctx.fill();
-          break;
-      }
-
-      ctx.restore();
-    };
-
-    // Animation loop
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      shapes.forEach((shape) => {
-        // Update position
-        shape.x += shape.speedX;
-        shape.y += shape.speedY;
-        shape.rotation += shape.rotationSpeed;
-
-        // Bounce off edges
-        if (shape.x < -shape.size || shape.x > canvas.width + shape.size) {
-          shape.speedX *= -1;
-        }
-        if (shape.y < -shape.size || shape.y > canvas.height + shape.size) {
-          shape.speedY *= -1;
-        }
-
-        // Wrap around edges
-        if (shape.x < -shape.size) shape.x = canvas.width + shape.size;
-        if (shape.x > canvas.width + shape.size) shape.x = -shape.size;
-        if (shape.y < -shape.size) shape.y = canvas.height + shape.size;
-        if (shape.y > canvas.height + shape.size) shape.y = -shape.size;
-
-        drawShape(shape);
-      });
-
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    initShapes();
+    resizeCanvas();
+    initParticles(); // Ensure particles are created immediately
     animate();
 
-    // Cleanup
     return () => {
       window.removeEventListener("resize", resizeCanvas);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      cancelAnimationFrame(animationFrameId);
     };
-  }, [mounted]);
+  }, [mounted, theme]);
 
   if (!mounted) return null;
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 opacity-60 dark:opacity-60 transition-opacity duration-500 pointer-events-none"
+      // 'fixed' keeps it from scrolling, 'pointer-events-none' lets clicks pass through
+      className="fixed inset-0 pointer-events-none"
+      style={{ background: "transparent" }}
     />
   );
 };

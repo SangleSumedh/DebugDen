@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { persist } from "zustand/middleware";
-
-import { AppwriteException, ID, Models } from "appwrite";
+import { AppwriteException, ID, Models, OAuthProvider } from "appwrite";
 import { account } from "@/models/client/config";
 
 export interface UserPrefs {
   reputation: number;
+  avatar?: string;
 }
 
 interface IAuthStore {
@@ -27,11 +27,14 @@ interface IAuthStore {
     password: string
   ): Promise<{ success: boolean; error?: AppwriteException | null }>;
   logout(): Promise<void>;
+  loginWithGoogle(): void;
+  loadOAuthSession(): Promise<boolean>; // Changed return type to boolean
+  fetchGoogleImage: () => Promise<string | null>;
 }
 
 export const useAuthStore = create<IAuthStore>()(
   persist(
-    immer((set) => ({
+    immer((set, get) => ({
       session: null,
       jwt: null,
       user: null,
@@ -45,27 +48,54 @@ export const useAuthStore = create<IAuthStore>()(
         try {
           const session = await account.getSession("current");
           set({ session });
-        } catch (error) {
-          console.log(error);
+        } catch {
+          // no session = ignore
         }
       },
 
-      async login(email: string, password: string) {
+      fetchGoogleImage: async () => {
         try {
-          // Delete existing session if present
-          try {
-            await account.deleteSession("current");
-          } catch {
-            // ignore if no session exists
+          // A. Get the session to find the provider token
+          const session = await account.getSession("current");
+
+          // Check if we actually have a Google token
+          if (session.provider !== "google" || !session.providerAccessToken) {
+            return null;
           }
 
-          // Create new session
+          // B. Call Google API directly using the token
+          const response = await fetch(
+            "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+            {
+              headers: {
+                Authorization: `Bearer ${session.providerAccessToken}`,
+              },
+            }
+          );
+
+          if (!response.ok) return null;
+
+          const googleData = await response.json();
+
+          // C. Google returns a 'picture' field with the URL
+          return googleData.picture as string; // This is your HD Google Image URL
+        } catch (error) {
+          console.error("Failed to fetch Google image", error);
+          return null;
+        }
+      },
+
+      async login(email, password) {
+        try {
+          try {
+            await account.deleteSession("current");
+          } catch {}
+
           const session = await account.createEmailPasswordSession(
             email,
             password
           );
 
-          // Fetch user info and JWT after session exists
           const [user, { jwt }] = await Promise.all([
             account.get<UserPrefs>(),
             account.createJWT(),
@@ -78,7 +108,6 @@ export const useAuthStore = create<IAuthStore>()(
           set({ session, user, jwt });
           return { success: true };
         } catch (error) {
-          console.log(error);
           return {
             success: false,
             error: error instanceof AppwriteException ? error : null,
@@ -86,22 +115,17 @@ export const useAuthStore = create<IAuthStore>()(
         }
       },
 
-      async createAccount(name: string, email: string, password: string) {
+      async createAccount(name, email, password) {
         try {
-          // Delete any existing session
           try {
             await account.deleteSession("current");
-          } catch {
-            // ignore if no session exists
-          }
+          } catch {}
 
-          // Create new account
           await account.create(ID.unique(), email, password, name);
 
-          // Automatically log in after registration
-          return await this.login(email, password);
+          // Fixed circular dependency by using get()
+          return await get().login(email, password);
         } catch (error) {
-          console.log(error);
           return {
             success: false,
             error: error instanceof AppwriteException ? error : null,
@@ -115,6 +139,35 @@ export const useAuthStore = create<IAuthStore>()(
           set({ session: null, jwt: null, user: null });
         } catch (error) {
           console.log(error);
+        }
+      },
+
+      loginWithGoogle() {
+        account.createOAuth2Session(
+          OAuthProvider.Google, // Fixed Enum error
+          `${window.location.origin}/callback`,
+          `${window.location.origin}/callback?error=1`
+        );
+      },
+
+      async loadOAuthSession() {
+        try {
+          const session = await account.getSession("current");
+
+          const [user, { jwt }] = await Promise.all([
+            account.get<UserPrefs>(),
+            account.createJWT(),
+          ]);
+
+          if (!user.prefs?.reputation) {
+            await account.updatePrefs<UserPrefs>({ reputation: 0 });
+          }
+
+          set({ session, user, jwt });
+          return true; // Return success
+        } catch (error) {
+          console.log("OAuth load error:", error);
+          return false; // Return failure
         }
       },
     })),

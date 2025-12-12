@@ -10,12 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Sparkles } from "lucide-react";
-import ParticleBackground from "@/app/components/ParticleBackground";
+import { Sparkles, Send } from "lucide-react";
+import ParticleBackground from "../../components/ParticleBackground";
+import { motion } from "framer-motion";
 
 export default function NewQuestionPage() {
   const { user } = useAuthStore();
-
   const { addQuestion, error, loading } = useQuestionStore();
   const router = useRouter();
 
@@ -24,23 +24,13 @@ export default function NewQuestionPage() {
   const [tags, setTags] = useState("");
   const [mounted, setMounted] = useState(false);
 
-  // Prevent hydration issues
   useEffect(() => setMounted(true), []);
 
-  // Redirect if not logged in
   useEffect(() => {
     if (mounted && !user) {
       router.push("/login");
     }
   }, [mounted, user, router]);
-
-  if (!mounted || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
-      </div>
-    );
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,185 +48,172 @@ export default function NewQuestionPage() {
     }
   };
 
-  if (!mounted ||  !user) {
-    // Show loading while checking auth
+  if (!mounted || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#0B0C10]">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  // User is authenticated, render the form
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-purple-950/20 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0C10] text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <ParticleBackground />
-      <main className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          {/* Back button */}
-          <div className="mb-6">
-            <Button
-              variant="ghost"
-              onClick={() => router.back()}
-              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors mb-4"
+      <Navbar />
+
+      <main className="relative z-10 pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Section */}
+          <div className="mb-10 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 mb-6"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Back to questions
-            </Button>
-          </div>
-
-          {/* Loading Overlay */}
-          {loading && (
-            <div className="fixed inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-              <Card className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl">
-                <CardContent className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                  <p className="font-semibold text-slate-900 dark:text-white text-lg">
-                    Posting your question...
-                  </p>
-                  <p className="text-slate-500 dark:text-gray-400 text-sm mt-2">
-                    Sharing with the DebugDen community
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 mb-4">
-              <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+              <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                 Ask the Community
               </span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-              <span className="bg-gradient-to-r from-slate-900 via-purple-600 to-blue-600 dark:from-slate-100 dark:via-purple-400 dark:to-blue-400 bg-clip-text text-transparent">
-                Ask a Question
-              </span>
-            </h1>
-            <p className="text-lg text-slate-600 dark:text-slate-300 max-w-md mx-auto">
-              Get help from developers around the world
-            </p>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 dark:text-white mb-4"
+            >
+              Post a Public Question
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto"
+            >
+              Get help from developers around the world. Be specific, add code
+              snippets, and tag relevant technologies.
+            </motion.p>
           </div>
 
           {/* Form Card */}
-          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300">
-            <CardContent className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Title Field */}
-                <div className="space-y-3">
-                  <Label
-                    htmlFor="title"
-                    className="text-sm font-semibold text-slate-900 dark:text-white"
-                  >
-                    Question Title *
-                  </Label>
-                  <Input
-                    id="title"
-                    type="text"
-                    value={title}
-                    disabled={loading}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="What's your programming question?"
-                    required
-                    className="h-12 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-gray-400 focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-purple-400/20 transition-all rounded-xl"
-                  />
-                  <p className="text-xs text-slate-500 dark:text-gray-400">
-                    Be specific and descriptive about your problem
-                  </p>
-                </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="bg-white/70 dark:bg-[#16181D]/70 backdrop-blur-xl border border-slate-200 dark:border-white/10 shadow-2xl rounded-2xl overflow-hidden">
+              <CardContent className="p-8 md:p-10">
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  {/* Title Input */}
+                  <div className="space-y-3">
+                    <Label
+                      htmlFor="title"
+                      className="text-base font-semibold text-slate-900 dark:text-white"
+                    >
+                      Title
+                    </Label>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Be specific and imagine you’re asking a question to
+                      another person.
+                    </p>
+                    <Input
+                      id="title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      disabled={loading}
+                      placeholder="e.g. Is there an R function for finding the index of an element in a vector?"
+                      className="h-12 bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-blue-500/50 rounded-xl text-lg"
+                      required
+                    />
+                  </div>
 
-                {/* Content Field */}
-                <div className="space-y-3">
-                  <Label
-                    htmlFor="content"
-                    className="text-sm font-semibold text-slate-900 dark:text-white"
-                  >
-                    Detailed Explanation *
-                  </Label>
-                  <Textarea
-                    id="content"
-                    value={content}
-                    disabled={loading}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Describe your problem in detail. Include code snippets, error messages, and what you've already tried..."
-                    required
-                    className="min-h-[200px] bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-gray-400 focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-purple-400/20 resize-y transition-all rounded-xl"
-                  />
-                  <p className="text-xs text-slate-500 dark:text-gray-400">
-                    Include as much detail as possible for better answers
-                  </p>
-                </div>
+                  {/* Content Input */}
+                  <div className="space-y-3">
+                    <Label
+                      htmlFor="content"
+                      className="text-base font-semibold text-slate-900 dark:text-white"
+                    >
+                      Details
+                    </Label>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Introduce the problem and expand on what you put in the
+                      title. Minimum 20 characters.
+                    </p>
+                    <Textarea
+                      id="content"
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      disabled={loading}
+                      placeholder="Describe your problem in detail..."
+                      className="min-h-[250px] bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-blue-500/50 rounded-xl resize-y text-base leading-relaxed"
+                      required
+                    />
+                  </div>
 
-                {/* Tags Field */}
-                <div className="space-y-3">
-                  <Label
-                    htmlFor="tags"
-                    className="text-sm font-semibold text-slate-900 dark:text-white"
-                  >
-                    Tags
-                  </Label>
-                  <Input
-                    id="tags"
-                    type="text"
-                    value={tags}
-                    disabled={loading}
-                    onChange={(e) => setTags(e.target.value)}
-                    placeholder="javascript, react, nextjs, typescript, debugging"
-                    className="h-12 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-gray-400 focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 dark:focus:ring-purple-400/20 transition-all rounded-xl"
-                  />
-                  <p className="text-xs text-slate-500 dark:text-gray-400">
-                    Add relevant tags to help others find your question (comma
-                    separated)
-                  </p>
-                </div>
+                  {/* Tags Input */}
+                  <div className="space-y-3">
+                    <Label
+                      htmlFor="tags"
+                      className="text-base font-semibold text-slate-900 dark:text-white"
+                    >
+                      Tags
+                    </Label>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Add up to 5 tags to describe what your question is about
+                      (comma separated).
+                    </p>
+                    <Input
+                      id="tags"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      disabled={loading}
+                      placeholder="e.g. javascript, react, css"
+                      className="h-12 bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-blue-500/50 rounded-xl"
+                    />
+                  </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.back()}
-                    disabled={loading}
-                    className="flex-1 border-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl py-3 font-semibold transition-all"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl py-3 font-semibold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Posting...
-                      </div>
-                    ) : (
-                      "Post Your Question"
-                    )}
-                  </Button>
-                </div>
-              </form>
+                  {/* Error Message */}
+                  {error && (
+                    <div className="p-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl text-rose-600 dark:text-rose-400 text-sm font-medium text-center">
+                      {error}
+                    </div>
+                  )}
 
-              {/* Error Display */}
-              {error && (
-                <div className="mt-6 p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl">
-                  <p className="text-rose-700 dark:text-rose-400 text-center font-medium">
-                    {error}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  {/* Actions */}
+                  <div className="flex flex-col-reverse sm:flex-row items-center gap-4 pt-4 border-t border-slate-200 dark:border-white/5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => router.back()}
+                      disabled={loading}
+                      className="w-full sm:w-auto text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                    >
+                      Cancel
+                    </Button>
 
-          {/* Help Text */}
-          <div className="text-center mt-8">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Your question will be visible to the entire DebugDen community
-            </p>
-          </div>
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full sm:w-auto sm:ml-auto bg-blue-600 hover:bg-blue-500 text-white px-8 py-6 rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                          Posting...
+                        </>
+                      ) : (
+                        <>
+                          <span>Post Question</span>
+                          <Send className="w-4 h-4" />
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </main>
     </div>

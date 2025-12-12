@@ -4,48 +4,69 @@ import { useAuthStore } from "@/store/Auth";
 import { useRouter, usePathname } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { LogIn, LogOut, Search, Moon, Sun } from "lucide-react";
-import Image from "next/image";
+import {  LogOut, Search, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuestionStore } from "@/store/Question";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+// Ensure next/image is imported
+import Image from "next/image";
 
 export default function Navbar() {
-  const { session, logout } = useAuthStore();
+  // 1. Destructure fetchGoogleImage from store
+  const { session, logout, user, fetchGoogleImage } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // 2. Add state for the avatar URL
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const { searchQuestions, clearSearch } = useQuestionStore();
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Hide Navbar on login/register pages
+  // 3. Add Effect to load the real Google Avatar
+  useEffect(() => {
+    const loadRealAvatar = async () => {
+      if (!user) return;
+
+      // If we already saved it in prefs, use that
+      if (user.prefs?.avatar) {
+        setAvatarUrl(user.prefs.avatar);
+        return;
+      }
+
+      // Otherwise fetch from Google
+      const googleUrl = await fetchGoogleImage();
+      if (googleUrl) {
+        setAvatarUrl(googleUrl);
+      }
+    };
+
+    loadRealAvatar();
+  }, [user, fetchGoogleImage]);
+
   const hiddenPaths = ["/login", "/register"];
   if (!mounted || hiddenPaths.includes(pathname)) return null;
-
-  // Only show search on /questions path (home page)
-  const showSearch = pathname === "/questions";
-
-  const handleAuth = () => {
-    if (session) {
-      logout();
-      router.push("/login");
-    } else {
-      router.push("/login");
-    }
-  };
-
-  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
-  if (theme === "dark") {
-    localStorage.setItem("theme", "dark");
-  } else {
-    localStorage.setItem("theme", "light");
-  }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -55,149 +76,196 @@ export default function Navbar() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pathname !== "/questions") router.push("/questions");
+    if (pathname !== "/") router.push("/");
     searchQuestions(searchInput);
+    setIsSearchOpen(false);
   };
 
-  const clearSearchInput = () => {
-    setSearchInput("");
-    clearSearch();
+  const handleLogout = async () => {
+    await logout();
+    setIsProfileOpen(false);
+    router.push("/login");
   };
 
   return (
-    <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl bg-white/70 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl z-50 shadow-lg shadow-cyan-200/10">
-      {/* Animated Border Container */}
-      <div className="relative rounded-2xl p-px bg-gradient-to-r from-cyan-400 via-purple-500 to-cyan-400 bg-[length:200%_100%] animate-gradient-shift">
-        {/* Inner content with proper border radius */}
-        <div className="relative bg-white/70 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl overflow-hidden">
-          {/* Subtle inner glow */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none" />
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center py-4 px-4">
+      {/* Main Glass Container */}
+      <div className="w-full max-w-7xl bg-white/70 dark:bg-[#0B0C10]/80 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-xl shadow-black/5 dark:shadow-blue-900/5">
+        <div className="px-5 py-3 flex items-center justify-between">
+          {/* LEFT: Logo */}
+          <div
+            onClick={() => {
+              setSearchInput("");
+              clearSearch();
+              router.push("/");
+            }}
+            className="flex items-center gap-2 cursor-pointer group"
+          >
+            {/* UPDATED: Using an SVG Logo instead of CSS placeholder */}
+            <div className="relative w-8 h-8 transition-transform group-hover:scale-110">
+              <Image
+                src="/debug-den.svg"
+                alt="DebugDen Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <span className="hidden sm:block text-lg font-bold tracking-tight text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              DebugDen
+            </span>
+          </div>
 
-          <div className="px-5 py-3 flex items-center justify-between relative z-10">
-            {/* Brand */}
-            <div
-              onClick={() => {
-                clearSearchInput();
-                router.push("/");
-              }}
-              className="flex items-center gap-2 cursor-pointer group"
+          {/* CENTER: Desktop Search */}
+          <form
+            onSubmit={handleSearchSubmit}
+            className="hidden md:flex items-center gap-2 flex-1 max-w-md mx-8 group"
+          >
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+              <Input
+                type="text"
+                value={searchInput}
+                onChange={handleSearchChange}
+                placeholder="Search questions..."
+                className="pl-10 bg-slate-100/50 dark:bg-white/5 border-slate-200 dark:border-white/10 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 rounded-xl transition-all"
+              />
+            </div>
+          </form>
+
+          {/* RIGHT: Actions */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Search Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden text-slate-600 dark:text-slate-400"
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
-              <div className="relative">
-                <Image
-                  src="/debug-den.svg"
-                  alt="DebugDen Logo"
-                  width={36}
-                  height={36}
-                  className="rounded-md group-hover:scale-110 transition-transform duration-200 relative z-10"
-                />
-                {/* Logo glow effect */}
-                <div className="absolute inset-0 rounded-md bg-cyan-500/20 blur-md group-hover:bg-cyan-400/30 transition-all duration-300 scale-110 opacity-0 group-hover:opacity-100" />
-              </div>
-              <span className="text-xl font-bold tracking-wide text-slate-900 dark:text-white group-hover:text-cyan-500 dark:group-hover:text-purple-400 transition-colors duration-300">
-                DebugDen
-              </span>
-            </div>
+              <Search className="w-5 h-5" />
+            </Button>
 
-            {showSearch && (
-              <form
-                onSubmit={handleSearchSubmit}
-                className="hidden md:flex items-center gap-2 w-1/2"
-              >
-                <div className="relative flex-1">
-                  <div className="flex items-center gap-2 w-full bg-cyan-50/50 dark:bg-white/5 rounded-xl px-3 py-1.5 border border-cyan-200/40 dark:border-white/10 focus-within:ring-2 focus-within:ring-cyan-400 dark:focus-within:ring-purple-500 focus-within:shadow-lg focus-within:shadow-cyan-500/20 dark:focus-within:shadow-purple-500/20 transition-all duration-300">
-                    <Search className="w-4 h-4 text-cyan-500 dark:text-purple-300 flex-shrink-0" />
-                    <Input
-                      type="text"
-                      value={searchInput}
-                      onChange={handleSearchChange}
-                      placeholder="Search questions, tags, or users..."
-                      className="flex-1 bg-transparent border-none focus-visible:ring-0 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-400"
-                    />
-                    {searchInput && (
-                      <button
-                        type="button"
-                        onClick={clearSearchInput}
-                        className="text-slate-400 hover:text-cyan-500 dark:hover:text-purple-400 transition-colors duration-200"
-                      >
-                        ×
-                      </button>
-                    )}
+            {/* Theme Toggle */}
+            <Button
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              variant="ghost"
+              size="icon"
+              className="text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl"
+            >
+              {theme === "light" ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </Button>
+
+            {/* Auth State */}
+            {session ? (
+              <div className="relative" ref={profileRef}>
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200 dark:border-white/10"
+                >
+                  {/* User Avatar / Initials */}
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 p-[2px]">
+                    <div className="w-full h-full rounded-full bg-white dark:bg-[#0B0C10] flex items-center justify-center overflow-hidden relative">
+                      {/* 4. Updated Avatar Rendering Logic */}
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={user?.name || "User"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="font-bold text-xs text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
+                          {user?.name
+                            ? user.name.substring(0, 2).toUpperCase()
+                            : "U"}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </form>
+                </button>
+
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {isProfileOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.1 }}
+                      className="absolute right-0 mt-3 w-56 bg-white dark:bg-[#16181D] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden py-1"
+                    >
+                      <div className="px-4 py-3 border-b border-slate-100 dark:border-white/5">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                          {user?.name || "User"}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                          {user?.email}
+                        </p>
+                      </div>
+
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                      >
+                        <User className="w-4 h-4" /> Profile
+                      </Link>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-left"
+                      >
+                        <LogOut className="w-4 h-4" /> Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 ml-2">
+                <Button
+                  onClick={() => router.push("/login")}
+                  variant="ghost"
+                  className="hidden sm:flex text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/10"
+                >
+                  Log In
+                </Button>
+                <Button
+                  onClick={() => router.push("/register")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20"
+                >
+                  Sign Up
+                </Button>
+              </div>
             )}
-
-            {/* Actions */}
-            <div className="flex items-center gap-1">
-              <Button
-                onClick={() => router.push("/about")}
-                variant="ghost"
-                size="sm"
-                className="text-slate-700 dark:text-white hover:bg-cyan-50 dark:hover:bg-purple-800 hover:text-cyan-600 dark:hover:text-purple-300 rounded-xl px-3 py-1.5 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10 dark:hover:shadow-purple-500/10"
-              >
-                About
-              </Button>
-              <Button
-                onClick={toggleTheme}
-                variant="ghost"
-                size="sm"
-                className="w-9 h-9 p-0 text-slate-700 dark:text-gray-300 hover:bg-cyan-50 dark:hover:bg-purple-800 hover:text-cyan-600 dark:hover:text-purple-300 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10 dark:hover:shadow-purple-500/10 relative group"
-                title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-              >
-                {mounted ? (
-                  <>
-                    <Sun className="w-4 h-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 group-hover:scale-110" />
-                    <Moon className="absolute w-4 h-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 group-hover:scale-110" />
-                  </>
-                ) : (
-                  <Sun className="w-4 h-4" />
-                )}
-                <span className="sr-only">Toggle theme</span>
-                {/* Theme toggle glow */}
-                <div className="absolute inset-0 rounded-xl bg-cyan-500/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Button>
-
-              <Button
-                onClick={handleAuth}
-                variant="ghost"
-                size="sm"
-                className="text-slate-700 dark:text-white hover:bg-cyan-50 dark:hover:bg-purple-800 hover:text-cyan-600 dark:hover:text-purple-300 rounded-xl px-3 py-1.5 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10 dark:hover:shadow-purple-500/10"
-              >
-                {session ? (
-                  <>
-                    <LogOut className="w-4 h-4 mr-1 group-hover:scale-110 transition-transform duration-200" />
-                    Logout
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="w-4 h-4 mr-1 group-hover:scale-110 transition-transform duration-200" />
-                    Login
-                  </>
-                )}
-              </Button>
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* Global styles for the gradient animation */}
-      <style jsx>{`
-        @keyframes gradient-shift {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
-        .animate-gradient-shift {
-          animation: gradient-shift 3s ease infinite;
-          background-size: 200% 200%;
-        }
-      `}</style>
+        {/* Mobile Search Bar (Expandable) */}
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="md:hidden border-t border-slate-200 dark:border-white/10 overflow-hidden"
+            >
+              <form onSubmit={handleSearchSubmit} className="p-4">
+                <Input
+                  autoFocus
+                  type="text"
+                  value={searchInput}
+                  onChange={handleSearchChange}
+                  placeholder="Search topics..."
+                  className="bg-slate-100/50 dark:bg-white/5 border-slate-200 dark:border-white/10"
+                />
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </nav>
   );
 }

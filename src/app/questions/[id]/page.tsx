@@ -10,12 +10,12 @@ import { useCommentStore, CommentParentType } from "@/store/Comment";
 import { useVoteStore } from "@/store/Vote";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Sparkles, MessageCircle, ArrowLeft, User, Bot } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import { ArrowLeft, Bot, MessageCircle, Send, Sparkles } from "lucide-react";
 import Link from "next/link";
+import ParticleBackground from "../../components/ParticleBackground";
+import { motion } from "framer-motion";
 
 interface Question {
   $id: string;
@@ -36,12 +36,7 @@ export default function QuestionDetail() {
   const [aiLoading, setAILoading] = useState(false);
 
   const { user } = useAuthStore();
-  const {
-    answers,
-    fetchAnswers,
-    addAnswer,
-    loading: answersLoading,
-  } = useAnswerStore();
+  const { answers, fetchAnswers, addAnswer } = useAnswerStore();
   const { comments, fetchComments, addComment } = useCommentStore();
   const { voteCounts, votes, fetchVotes, castVote } = useVoteStore();
 
@@ -102,7 +97,6 @@ export default function QuestionDetail() {
       const data = await res.json();
 
       if (data.success) {
-        alert("AI answer created successfully!");
         fetchAnswers(question.$id);
       } else {
         console.error(data.error);
@@ -134,31 +128,44 @@ export default function QuestionDetail() {
     (c) => c.type === CommentParentType.Question && c.typeId === id
   );
 
-  if (loading)
+  // --- HELPER: Avatar Component ---
+  const UserAvatar = ({
+    name,
+    size = "md",
+  }: {
+    name: string;
+    size?: "sm" | "md" | "lg";
+  }) => {
+    const sizeClasses = {
+      sm: "w-6 h-6 text-xs",
+      md: "w-10 h-10 text-sm",
+      lg: "w-12 h-12 text-base",
+    }[size];
+
     return (
-      <div className="min-h-screen bg-white dark:bg-black transition-colors">
-        <Navbar />
-        <div className="pt-32 flex items-center justify-center">
-          <div className="text-slate-600 dark:text-slate-400">
-            Loading question...
-          </div>
+      <div
+        className={`relative ${sizeClasses} rounded-full overflow-hidden bg-gradient-to-tr from-blue-500 to-purple-500 p-[1px]`}
+      >
+        <div className="w-full h-full rounded-full bg-white dark:bg-[#0B0C10] flex items-center justify-center relative">
+          <img
+            src={`https://api.dicebear.com/9.x/initials/svg?seed=${name}&backgroundColor=transparent&chars=2`}
+            alt={name}
+            className="w-full h-full object-cover z-10"
+          />
         </div>
       </div>
     );
+  };
 
+  if (loading)
+    return <div className="min-h-screen bg-slate-50 dark:bg-[#0B0C10]" />;
   if (!question)
     return (
-      <div className="min-h-screen bg-white dark:bg-black transition-colors">
-        <Navbar />
-        <div className="pt-32 flex items-center justify-center">
-          <div className="text-rose-600 dark:text-rose-400">
-            Question not found
-          </div>
-        </div>
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0B0C10] flex items-center justify-center text-slate-500">
+        Question not found
       </div>
     );
 
-  // --- Votes for Question ---
   const qCounts = voteCounts[`question-${question.$id}`] || {
     upvotes: 0,
     downvotes: 0,
@@ -167,471 +174,358 @@ export default function QuestionDetail() {
   const qUserVote = user ? votes[`question-${question.$id}-${user.$id}`] : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20 transition-colors">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0C10] text-slate-900 dark:text-slate-100 transition-colors duration-300">
+      <ParticleBackground />
       <Navbar />
 
-      {/* Main Content */}
-      <main className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          {/* Back Button */}
-          <div className="mb-6">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to questions
-            </Link>
+      <main className="relative z-10 pt-28 pb-20 px-4 sm:px-6 max-w-7xl mx-auto">
+        {/* Back Button */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-8 group"
+        >
+          <div className="p-2 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 group-hover:border-blue-500/50 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
           </div>
+          <span className="font-medium">Back to feed</span>
+        </Link>
 
-          {/* Question Card */}
-          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-xl rounded-2xl mb-8">
-            <CardContent className="px-8">
-              <div className="flex items-start gap-6">
-                {/* Voting Sidebar */}
-                <div className="flex flex-col items-center space-y-3 flex-shrink-0">
-                  <button
-                    disabled={!user}
-                    onClick={() =>
-                      castVote("question", question.$id, "upvoted")
-                    }
-                    className={`p-3 rounded-xl transition-all ${
-                      qUserVote === "upvoted"
-                        ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                        : "text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    } ${
-                      !user
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:scale-110"
-                    }`}
-                    title={user ? "Upvote" : "Login to vote"}
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
+        {/* ================= QUESTION CARD ================= */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/70 dark:bg-[#16181D]/70 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden"
+        >
+          <div className="p-6 sm:p-8 flex gap-6">
+            {/* Voting Side */}
+            <div className="flex flex-col items-center gap-2">
+              <button
+                disabled={!user}
+                onClick={() => castVote("question", question.$id, "upvoted")}
+                className={`p-2 rounded-xl transition-all ${
+                  qUserVote === "upvoted"
+                    ? "text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10"
+                    : "text-slate-400 hover:text-emerald-500 hover:bg-slate-100 dark:hover:bg-white/5"
+                }`}
+              >
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
 
-                  <span
-                    className={`text-lg font-bold px-3 py-1 rounded-full ${
-                      qCounts.score > 0
-                        ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                        : qCounts.score < 0
-                        ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                        : "text-slate-500 dark:text-gray-400 bg-slate-100 dark:bg-slate-800"
-                    }`}
-                  >
-                    {qCounts.score}
-                  </span>
+              <span
+                className={`text-xl font-bold ${
+                  qCounts.score > 0
+                    ? "text-emerald-500"
+                    : qCounts.score < 0
+                    ? "text-rose-500"
+                    : "text-slate-500"
+                }`}
+              >
+                {qCounts.score}
+              </span>
 
-                  <button
-                    disabled={!user}
-                    onClick={() =>
-                      castVote("question", question.$id, "downvoted")
-                    }
-                    className={`p-3 rounded-xl transition-all ${
-                      qUserVote === "downvoted"
-                        ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                        : "text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    } ${
-                      !user
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:scale-110"
-                    }`}
-                    title={user ? "Downvote" : "Login to vote"}
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
-                </div>
+              <button
+                disabled={!user}
+                onClick={() => castVote("question", question.$id, "downvoted")}
+                className={`p-2 rounded-xl transition-all ${
+                  qUserVote === "downvoted"
+                    ? "text-rose-500 bg-rose-50 dark:bg-rose-500/10"
+                    : "text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-white/5"
+                }`}
+              >
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
 
-                {/* Question Content */}
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
-                    {question.title}
-                  </h1>
+            {/* Content Side */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4 leading-tight">
+                {question.title}
+              </h1>
 
-                  <div className="prose prose-slate dark:prose-invert max-w-none mb-6">
-                    <p className="text-slate-700 dark:text-slate-300 text-lg leading-relaxed whitespace-pre-wrap">
-                      {question.content}
+              <div className="prose prose-slate dark:prose-invert max-w-none text-slate-700 dark:text-slate-300">
+                <p className="whitespace-pre-wrap leading-relaxed">
+                  {question.content}
+                </p>
+              </div>
+
+              {/* Meta Footer */}
+              <div className="mt-8 flex items-center justify-between pt-6 border-t border-slate-200 dark:border-white/5">
+                <div className="flex items-center gap-3">
+                  <UserAvatar name={question.authorName} size="md" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      {question.authorName}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Asked {new Date(question.$createdAt).toLocaleDateString()}
                     </p>
                   </div>
+                </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-white" />
-                      </div>
+                <Button
+                  variant="ghost"
+                  onClick={() =>
+                    setSelectedParentId(
+                      selectedParentId === question.$id ? null : question.$id
+                    )
+                  }
+                  className="text-slate-500 dark:text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/10"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  {questionComments.length} Comments
+                </Button>
+              </div>
+
+              {/* Comments Section */}
+              {(questionComments.length > 0 ||
+                selectedParentId === question.$id) && (
+                <div className="mt-6 bg-slate-50 dark:bg-white/5 rounded-xl p-4 space-y-4">
+                  {questionComments.map((c) => (
+                    <div key={c.$id} className="flex gap-3 text-sm">
+                      <UserAvatar name={c.authorName} size="sm" />
                       <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">
-                          {question.authorName}
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          Asked on{" "}
-                          {new Date(question.$createdAt).toLocaleDateString()}
-                        </p>
+                        <span className="font-semibold text-slate-900 dark:text-white mr-2">
+                          {c.authorName}
+                        </span>
+                        <span className="text-slate-600 dark:text-slate-300">
+                          {c.content}
+                        </span>
                       </div>
                     </div>
+                  ))}
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setSelectedParentId(
-                          selectedParentId === question.$id
-                            ? null
-                            : question.$id
-                        )
-                      }
-                      className="flex items-center gap-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      {selectedParentId === question.$id
-                        ? "Cancel"
-                        : "Add Comment"}
-                    </Button>
-                  </div>
-
-                  {/* Question Comments */}
-                  {questionComments.length > 0 && (
-                    <div className="mt-6 space-y-3">
-                      {questionComments.map((comment) => (
-                        <div
-                          key={comment.$id}
-                          className="bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/50"
-                        >
-                          <p className="text-slate-700 dark:text-slate-300 text-sm mb-2">
-                            {comment.content}
-                          </p>
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            - by {comment.authorName}
-                          </span>
-                        </div>
-                      ))}
+                  {selectedParentId === question.$id && user && (
+                    <div className="flex gap-3 pt-2">
+                      <Textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Add a comment..."
+                        className="bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 min-h-[60px]"
+                      />
+                      <Button
+                        size="icon"
+                        onClick={() =>
+                          handleAddComment(
+                            CommentParentType.Question,
+                            question.$id
+                          )
+                        }
+                        className="bg-blue-600 hover:bg-blue-500"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Comment Form for Question */}
-              {selectedParentId === question.$id && user && (
-                <div className="mt-6 bg-slate-50/50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200/60 dark:border-slate-700/50">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-                    Add a Comment
-                  </h3>
-                  <Textarea
-                    placeholder="Write your comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="mb-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-gray-400 focus:border-purple-500 dark:focus:border-purple-400"
-                    rows={3}
-                  />
-                  <Button
-                    onClick={() =>
-                      handleAddComment(CommentParentType.Question, question.$id)
-                    }
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                  >
-                    Submit Comment
-                  </Button>
-                </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Answers Section */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Answers
-                {answers.length > 0 && (
-                  <span className="ml-2 text-slate-500 dark:text-slate-400 text-lg font-normal">
-                    ({answers.length})
-                  </span>
-                )}
-              </h2>
             </div>
+          </div>
+        </motion.div>
 
-            {answersLoading ? (
-              <div className="text-center py-8">
-                <div className="text-slate-500 dark:text-slate-400">
-                  Loading answers...
-                </div>
-              </div>
-            ) : answers.length > 0 ? (
-              answers.map((ans) => {
-                const answerComments = comments.filter(
-                  (c) =>
-                    c.type === CommentParentType.Answer && c.typeId === ans.$id
-                );
-
-                // --- Votes for Answer ---
-                const aCounts = voteCounts[`answer-${ans.$id}`] || {
-                  upvotes: 0,
-                  downvotes: 0,
-                  score: 0,
-                };
-                const aUserVote = user
-                  ? votes[`answer-${ans.$id}-${user.$id}`]
-                  : null;
-
-                return (
-                  <Card
-                    key={ans.$id}
-                    className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-lg rounded-2xl"
-                  >
-                    <CardContent className="px-6">
-                      <div className="flex items-start gap-6">
-                        {/* Voting Sidebar */}
-                        <div className="flex flex-col items-center space-y-3 flex-shrink-0">
-                          <button
-                            disabled={!user}
-                            onClick={() =>
-                              castVote("answer", ans.$id, "upvoted")
-                            }
-                            className={`p-2 rounded-xl transition-all ${
-                              aUserVote === "upvoted"
-                                ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                                : "text-slate-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-800"
-                            } ${
-                              !user
-                                ? "opacity-50 cursor-not-allowed"
-                                : "hover:scale-110"
-                            }`}
-                            title={user ? "Upvote" : "Login to vote"}
-                          >
-                            <svg
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
-
-                          <span
-                            className={`text-sm font-semibold px-2 py-1 rounded ${
-                              aCounts.score > 0
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : aCounts.score < 0
-                                ? "text-rose-600 dark:text-rose-400"
-                                : "text-slate-500 dark:text-gray-400"
-                            }`}
-                          >
-                            {aCounts.score}
-                          </span>
-
-                          <button
-                            disabled={!user}
-                            onClick={() =>
-                              castVote("answer", ans.$id, "downvoted")
-                            }
-                            className={`p-2 rounded-xl transition-all ${
-                              aUserVote === "downvoted"
-                                ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                                : "text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-50 dark:hover:bg-slate-800"
-                            } ${
-                              !user
-                                ? "opacity-50 cursor-not-allowed"
-                                : "hover:scale-110"
-                            }`}
-                            title={user ? "Downvote" : "Login to vote"}
-                          >
-                            <svg
-                              className="w-5 h-5"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-
-                        {/* Answer Content */}
-                        <div className="flex-1 min-w-0">
-                          <div className="prose prose-slate dark:prose-invert max-w-none mb-4">
-                            <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
-                              {ans.content}
-                            </p>
-                          </div>
-
-                          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                            <div className="flex items-center gap-3">
-                              <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                                <User className="w-3 h-3 text-white" />
-                              </div>
-                              <span className="text-sm text-slate-600 dark:text-slate-400">
-                                Answered by {ans.authorName}
-                              </span>
-                            </div>
-
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                setSelectedParentId(
-                                  selectedParentId === ans.$id ? null : ans.$id
-                                )
-                              }
-                              className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-                            >
-                              <MessageCircle className="w-4 h-4 mr-1" />
-                              {selectedParentId === ans.$id
-                                ? "Cancel"
-                                : "Comment"}
-                            </Button>
-                          </div>
-
-                          {/* Answer Comments */}
-                          {answerComments.length > 0 && (
-                            <div className="mt-4 space-y-2">
-                              {answerComments.map((comment) => (
-                                <div
-                                  key={comment.$id}
-                                  className="bg-slate-50/50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200/60 dark:border-slate-700/50"
-                                >
-                                  <p className="text-slate-600 dark:text-slate-400 text-sm mb-1">
-                                    {comment.content}
-                                  </p>
-                                  <span className="text-xs text-slate-500 dark:text-slate-500">
-                                    - by {comment.authorName}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-
-                          {/* Comment Form for Answer */}
-                          {selectedParentId === ans.$id && user && (
-                            <div className="mt-4 bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/50">
-                              <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                                Add a Comment
-                              </h4>
-                              <Textarea
-                                placeholder="Write your comment..."
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                className="mb-3 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-gray-400"
-                                rows={2}
-                              />
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  handleAddComment(
-                                    CommentParentType.Answer,
-                                    ans.$id
-                                  )
-                                }
-                                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                              >
-                                Submit Comment
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            ) : (
-              <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 rounded-2xl">
-                <CardContent className="p-8 text-center">
-                  <MessageCircle className="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    No answers yet
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400 mb-4">
-                    Be the first to share your knowledge!
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+        {/* ================= ANSWERS LIST ================= */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span className="bg-blue-600 w-1 h-6 rounded-full block" />
+              {answers.length} Answers
+            </h2>
           </div>
 
-          {/* Add Answer Section */}
-          {user ? (
-            <Card className="mt-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 shadow-xl rounded-2xl">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                  Your Answer
-                </h3>
-                <Textarea
-                  placeholder="Write your detailed answer here... Be as specific as possible to help others understand your solution."
-                  value={newAnswer}
-                  onChange={(e) => setNewAnswer(e.target.value)}
-                  className="min-h-[200px] bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-gray-400 focus:border-purple-500 dark:focus:border-purple-400 mb-6 rounded-xl"
-                />
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button
-                    onClick={handleAddAnswer}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-xl font-semibold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all"
-                    size="lg"
-                  >
-                    Submit Answer
-                  </Button>
-                  <Button
-                    onClick={handleGenerateAIAnswer}
-                    disabled={aiLoading}
-                    className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl font-semibold shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all"
-                    size="lg"
-                  >
-                    {aiLoading ? (
+          <div className="space-y-6">
+            {answers.map((ans) => {
+              const answerComments = comments.filter(
+                (c) =>
+                  c.type === CommentParentType.Answer && c.typeId === ans.$id
+              );
+              const aCounts = voteCounts[`answer-${ans.$id}`] || { score: 0 };
+              const aUserVote = user
+                ? votes[`answer-${ans.$id}-${user.$id}`]
+                : null;
+
+              return (
+                <div
+                  key={ans.$id}
+                  className="bg-white/70 dark:bg-[#16181D]/70 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-6 sm:p-8 flex gap-6"
+                >
+                  {/* Answer Voting */}
+                  <div className="flex flex-col items-center gap-1">
+                    <button
+                      onClick={() => castVote("answer", ans.$id, "upvoted")}
+                      disabled={!user}
+                      className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 ${
+                        aUserVote === "upvoted"
+                          ? "text-emerald-500"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
+                      </svg>
+                    </button>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      {aCounts.score}
+                    </span>
+                    <button
+                      onClick={() => castVote("answer", ans.$id, "downvoted")}
+                      disabled={!user}
+                      className={`p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 ${
+                        aUserVote === "downvoted"
+                          ? "text-rose-500"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      <svg
+                        className="w-6 h-6"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="prose prose-slate dark:prose-invert max-w-none mb-4 text-slate-700 dark:text-slate-300">
+                      <p className="whitespace-pre-wrap">{ans.content}</p>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm pt-4 border-t border-slate-200 dark:border-white/5">
                       <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Generating AI Answer...
+                        <UserAvatar name={ans.authorName} size="sm" />
+                        <span className="text-slate-900 dark:text-white font-medium">
+                          {ans.authorName}
+                        </span>
+                        <span className="text-slate-500">• Answered</span>
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Bot className="w-4 h-4" />
-                        Answer with AI
+                      <button
+                        onClick={() =>
+                          setSelectedParentId(
+                            selectedParentId === ans.$id ? null : ans.$id
+                          )
+                        }
+                        className="text-slate-500 hover:text-blue-500 transition-colors"
+                      >
+                        {answerComments.length > 0
+                          ? `${answerComments.length} Comments`
+                          : "Add Comment"}
+                      </button>
+                    </div>
+
+                    {/* Answer Comments */}
+                    {(answerComments.length > 0 ||
+                      selectedParentId === ans.$id) && (
+                      <div className="mt-4 pl-4 border-l-2 border-slate-200 dark:border-white/10 space-y-3">
+                        {answerComments.map((c) => (
+                          <div key={c.$id} className="text-sm">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200 mr-2">
+                              {c.authorName}:
+                            </span>
+                            <span className="text-slate-600 dark:text-slate-400">
+                              {c.content}
+                            </span>
+                          </div>
+                        ))}
+                        {selectedParentId === ans.$id && user && (
+                          <div className="flex gap-2 pt-2">
+                            {/* FIX: Typed Event Handler */}
+                            <Input
+                              value={newComment}
+                              onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                              ) => setNewComment(e.target.value)}
+                              placeholder="Reply to answer..."
+                              className="h-8 text-sm bg-transparent border-slate-300 dark:border-white/20"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                handleAddComment(
+                                  CommentParentType.Answer,
+                                  ans.$id
+                                )
+                              }
+                            >
+                              Reply
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
-                  </Button>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="mt-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-slate-700/50 rounded-2xl">
-              <CardContent className="p-8 text-center">
-                <p className="text-slate-600 dark:text-slate-400">
-                  Please{" "}
-                  <Link
-                    href="/login"
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                  >
-                    log in
-                  </Link>{" "}
-                  to submit an answer.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+              );
+            })}
+          </div>
         </div>
+
+        {/* ================= INPUT AREA ================= */}
+        {user ? (
+          <div className="mt-12 bg-white/70 dark:bg-[#16181D]/70 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-6 sm:p-8 shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
+              Your Answer
+            </h3>
+            <Textarea
+              value={newAnswer}
+              onChange={(e) => setNewAnswer(e.target.value)}
+              placeholder="Provide a detailed answer to help the community..."
+              className="min-h-[150px] bg-white dark:bg-black/20 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white resize-y rounded-xl focus:ring-2 focus:ring-blue-500/50 mb-4"
+            />
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+              <button
+                onClick={handleGenerateAIAnswer}
+                disabled={aiLoading}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 hover:border-purple-500/50 text-purple-600 dark:text-purple-400 transition-all"
+              >
+                {aiLoading ? (
+                  <Sparkles className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Bot className="w-4 h-4" />
+                )}
+                <span>Generate AI Draft</span>
+              </button>
+              <Button
+                onClick={handleAddAnswer}
+                size="lg"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500"
+              >
+                Post Answer
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-12 p-8 text-center bg-slate-100 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 border-dashed">
+            <p className="text-slate-600 dark:text-slate-400 mb-4">
+              Log in to contribute an answer
+            </p>
+            <Link href="/login">
+              <Button variant="outline">Log In</Button>
+            </Link>
+          </div>
+        )}
       </main>
     </div>
   );
