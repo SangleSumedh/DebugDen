@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sumedh-sangle.vercel.app/sitemap.xml
