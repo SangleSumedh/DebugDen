@@ -13,16 +13,16 @@ export async function POST(request: NextRequest) {
   const { votedById, voteStatus, type, typeId } = await request.json();
 
   // Find existing vote by this user
-  const existing = await databases.listDocuments(db, voteCollection, [
+  const existing = await databases.listRows(db, voteCollection, [
     Query.equal("type", type),
     Query.equal("typeId", typeId),
     Query.equal("votedById", votedById),
   ]);
 
-  const currentVote = existing.documents[0] ?? null;
+  const currentVote = existing.rows[0] ?? null;
 
   // Fetch the target (question/answer) + author
-  const targetDoc = await databases.getDocument(
+  const targetDoc = await databases.getRow(
     db,
     type === "question" ? questionCollection : answerCollection,
     typeId
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   if (!currentVote) {
     // No previous vote → create new
-    await databases.createDocument(db, voteCollection, ID.unique(), {
+    await databases.createRow(db, voteCollection, ID.unique(), {
       type,
       typeId,
       voteStatus,
@@ -47,11 +47,11 @@ export async function POST(request: NextRequest) {
     await adjustRep(voteStatus === "upvoted" ? +1 : -1);
   } else if (currentVote.voteStatus === voteStatus) {
     // Same vote clicked again → remove
-    await databases.deleteDocument(db, voteCollection, currentVote.$id);
+    await databases.deleteRow(db, voteCollection, currentVote.$id);
     await adjustRep(voteStatus === "upvoted" ? -1 : +1);
   } else {
     // Switching vote → update
-    await databases.updateDocument(db, voteCollection, currentVote.$id, {
+    await databases.updateRow(db, voteCollection, currentVote.$id, {
       voteStatus,
     });
     await adjustRep(voteStatus === "upvoted" ? +2 : -2);
@@ -59,12 +59,12 @@ export async function POST(request: NextRequest) {
 
   // Count all upvotes & downvotes
   const [upvotes, downvotes] = await Promise.all([
-    databases.listDocuments(db, voteCollection, [
+    databases.listRows(db, voteCollection, [
       Query.equal("type", type),
       Query.equal("typeId", typeId),
       Query.equal("voteStatus", "upvoted"),
     ]),
-    databases.listDocuments(db, voteCollection, [
+    databases.listRows(db, voteCollection, [
       Query.equal("type", type),
       Query.equal("typeId", typeId),
       Query.equal("voteStatus", "downvoted"),

@@ -3,7 +3,7 @@ import { db, voteCollection } from "../name";
 import { databases } from "./config";
 
 export default async function createVoteCollection() {
-  await databases.createCollection(db, voteCollection, voteCollection, [
+  await databases.createTable(db, voteCollection, voteCollection, [
     Permission.create("users"),
     Permission.read("any"),
     Permission.read("users"),
@@ -16,22 +16,22 @@ export default async function createVoteCollection() {
   //create attributes
 
   await Promise.all([
-    databases.createEnumAttribute(
+    databases.createEnumColumn(
       db,
       voteCollection,
       "type",
       ["question", "answer"],
       true
     ),
-    databases.createStringAttribute(db, voteCollection, "typeId", 50, true),
-    databases.createEnumAttribute(
+    databases.createStringColumn(db, voteCollection, "typeId", 50, true),
+    databases.createEnumColumn(
       db,
       voteCollection,
       "voteStatus",
       ["upvoted", "downvoted"],
       true
     ),
-    databases.createStringAttribute(db, voteCollection, "votedById", 50, true),
+    databases.createStringColumn(db, voteCollection, "votedById", 50, true),
   ]);
 
   console.log("Vote Attributes created");

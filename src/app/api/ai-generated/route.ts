@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Client, Databases, ID } from "node-appwrite";
+import { Client, TablesDB, ID } from "node-appwrite";
 import env from "@/app/env"; // make sure your env has OPENROUTER_API_KEY + APPWRITE creds
 import { db, answerCollection } from "@/models/name";
 
@@ -62,12 +62,12 @@ export async function POST(request: NextRequest) {
       .setProject(env.appwrite.projectId!)
       .setKey(env.appwrite.apikey!); // server-side key
 
-    const databases = new Databases(client);
+    const databases = new TablesDB(client);
 
     // Save AI answer into Appwrite
-    const aiAnswerDoc = await databases.createDocument(
+    const aiAnswerDoc = await databases.createRow(
       db, // database ID
-      answerCollection, // collection ID
+      answerCollection, // table name
       ID.unique(),
       {
         content: aiAnswerText,

@@ -7,7 +7,7 @@ import { UserPrefs } from "@/store/Auth";
 export async function POST(request: NextRequest) {
   try {
     const { questionId, answer, authorId } = await request.json();
-    const response = await databases.createDocument(
+    const response = await databases.createRow(
       db,
       answerCollection,
       ID.unique(),
@@ -40,9 +40,9 @@ export async function DELETE(request: NextRequest) {
   try {
     const { answerId } = await request.json();
 
-    const answer = await databases.getDocument(db, answerCollection, answerId);
+    const answer = await databases.getRow(db, answerCollection, answerId);
 
-    const response = await databases.deleteDocument(
+    const response = await databases.deleteRow(
       db,
       answerCollection,
       answerId

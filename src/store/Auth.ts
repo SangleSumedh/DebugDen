@@ -135,8 +135,12 @@ export const useAuthStore = create<IAuthStore>()(
 
       async logout() {
         try {
-          await account.deleteSessions();
+          await account.deleteSession("current");
           set({ session: null, jwt: null, user: null });
+          // Clear persisted storage to prevent rehydration of old state
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("auth");
+          }
         } catch (error) {
           console.log(error);
         }

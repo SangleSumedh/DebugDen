@@ -1,11 +1,11 @@
-import { IndexType, Permission } from "node-appwrite";
+import { TablesDBIndexType, Permission, OrderBy } from "node-appwrite";
 
 import { db, questionCollection } from "../name";
 import { databases } from "./config";
 
 export default async function createQuestionCollection() {
   //create collection
-  await databases.createCollection(db, questionCollection, questionCollection, [
+  await databases.createTable(db, questionCollection, questionCollection, [
     Permission.read("any"),
     Permission.read("users"),
     Permission.create("users"),
@@ -18,29 +18,29 @@ export default async function createQuestionCollection() {
   //creating attributes & indexes
 
   await Promise.all([
-    databases.createStringAttribute(db, questionCollection, "title", 100, true),
-    databases.createStringAttribute(
+    databases.createStringColumn(db, questionCollection, "title", 100, true),
+    databases.createStringColumn(
       db,
       questionCollection,
       "content",
       10000,
       true
     ),
-    databases.createStringAttribute(
+    databases.createStringColumn(
       db,
       questionCollection,
       "authorId",
       50,
       true
     ),
-    databases.createStringAttribute(
+    databases.createStringColumn(
       db,
       questionCollection,
       "authorName",
       50,
       false
     ),
-    databases.createStringAttribute(
+    databases.createStringColumn(
       db,
       questionCollection,
       "tags",
@@ -49,7 +49,7 @@ export default async function createQuestionCollection() {
       undefined,
       true
     ),
-    databases.createStringAttribute(
+    databases.createStringColumn(
       db,
       questionCollection,
       "attachmentId",
@@ -67,17 +67,17 @@ export default async function createQuestionCollection() {
       db,
       questionCollection,
       "title",
-      IndexType.Fulltext,
+      TablesDBIndexType.Fulltext,
       ["title"],
-      ["asc"]
+      [OrderBy.Asc]
     ),
     databases.createIndex(
       db,
       questionCollection,
       "content",
-      IndexType.Fulltext,
+      TablesDBIndexType.Fulltext,
       ["content"],
-      ["asc"]
+      [OrderBy.Asc]
     ),
   ]);
 }
